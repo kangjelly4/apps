@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Smart Finance App Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- SDK Firebase Compat Resmi -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        /* WATERMARK BACKGROUND */
+        .system-watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: 4rem;
+            font-weight: 900;
+            color: rgba(99, 102, 241, 0.04);
+            pointer-events: none;
+            user-select: none;
+            z-index: 1;
+            white-space: nowrap;
+            text-align: center;
+        }
+        .private-mode-active .system-watermark {
+            color: rgba(16, 185, 129, 0.04);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans pb-24 md:pb-6 relative">
+
+    <!-- BARIS KHUSUS WATERMARK PALING ATAS -->
+    <div class="w-full bg-gradient-to-r from-red-600 via-indigo-700 to-red-600 text-white text-center py-2 px-4 text-xs font-black tracking-widest uppercase shadow-md sticky top-0 z-50 select-none border-b-2 border-amber-400">
+        🔒 APP LISENSI PERMANEN: KANG JELL (WA: 083814559667 • IG: @kang.jell • TT: @kang.jell) 🔒
+    </div>
+
+    <!-- ELEMEN WATERMARK BACKEND -->
+    <div id="app-watermark-bg" class="system-watermark">
+        kang.jell • 083814559667<br>PRO FINANCE SYSTEM
+    </div>
+
+    <div class="max-w-6xl mx-auto p-3 sm:p-5 relative z-10">
+        
+        <!-- HEADER DENGAN USER DISPLAY & TOGGLE MODE -->
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-3 mb-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mt-2">
+            <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
+                <h1 class="text-xl font-black text-indigo-600 tracking-tight transition-all" id="app-title-display">🏪 TokoKelontong Pro</h1>
+                <span id="user-display-name" class="bg-indigo-100 text-indigo-800 text-[11px] font-bold px-2.5 py-1 rounded-full">-</span>
+            </div>
+            
+            <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <div id="mode-selector-box" class="hidden bg-gray-100 p-1 rounded-xl flex gap-1 text-xs font-bold">
+                    <button id="mode-btn-biz" onclick="switchAppMode('bisnis')" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white shadow-sm">Bisnis</button>
+                    <button id="mode-btn-priv" onclick="switchAppMode('pribadi')" class="px-3 py-1.5 rounded-lg text-gray-500 hover:bg-gray-200">Pribadi</button>
+                </div>
+                <button id="btn-logout" onclick="handleLogout()" class="hidden bg-red-50 text-red-500 text-xs px-3 py-1.5 rounded-xl font-bold border border-red-100 hover:bg-red-100">Keluar</button>
+            </div>
+        </div>
+
+        <!-- AUTH BOX -->
+        <div id="auth-section" class="max-w-md mx-auto bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mt-10">
+            <h2 class="text-lg font-bold mb-4 text-gray-700" id="auth-title">Masuk Aplikasi</h2>
+            <div class="space-y-3">
+                <input type="text" id="auth-name" placeholder="Nama Lengkap (Hanya untuk Daftar)" class="w-full p-2.5 border rounded-xl hidden text-sm text-gray-800">
+                <input type="email" id="auth-email" placeholder="Email Anda" class="w-full p-2.5 border rounded-xl text-sm text-gray-800">
+                <input type="password" id="auth-password" placeholder="Password" class="w-full p-2.5 border rounded-xl text-sm text-gray-800">
+                <button onclick="handleAuth()" class="w-full bg-indigo-600 text-white p-2.5 rounded-xl font-bold text-sm shadow-md">Lanjutkan</button>
+                <button onclick="toggleRegister()" id="toggle-btn" class="w-full text-xs text-indigo-500 mt-2 text-center block font-medium">Belum punya akun? Daftar sekarang</button>
+            </div>
+        </div>
+
+        <!-- MAIN APP DASHBOARD -->
+        <div id="main-dashboard" class="hidden space-y-4">
+
+            <!-- EVALUASI BULANAN -->
+            <div class="bg-indigo-50 border border-indigo-100 p-3.5 rounded-2xl text-xs space-y-2">
+                <p class="font-bold text-indigo-900 uppercase text-[10px]">📊 Evaluasi Performa Keuangan Anda:</p>
+                <p class="font-medium text-indigo-950" id="perf-text-smart">Memuat analisis...</p>
+            </div>
+
+            <!-- TAMPILAN UTAMA BERDASARKAN SEKTOR MODAL AKTIF -->
+            <div class="w-full space-y-4">
+                
+                <!-- ==================== AREA SEKTOR BISNIS ==================== -->
+                <div id="sector-bisnis" class="space-y-4">
+                    
+                    <!-- BERANDA TOKO -->
+                    <div id="page-home-biz" class="space-y-4 class-page-box">
+                        <div class="grid grid-cols-3 gap-2 text-center">
+                            <div class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                                <span class="text-[9px] text-gray-400 font-bold block uppercase">Penjualan</span>
+                                <span class="text-sm font-black text-blue-600 block mt-0.5" id="dash-sales">Rp 0</span>
+                                <span class="text-[9px] text-gray-500 font-bold block mt-0.5" id="dash-sales-qty">0 Pcs Terjual</span>
+                            </div>
+                            <div class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                                <span class="text-[9px] text-gray-400 font-bold block uppercase">Total HPP</span>
+                                <span class="text-sm font-black text-amber-600 block mt-0.5" id="dash-hpp">Rp 0</span>
+                            </div>
+                            <div class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                                <span class="text-[9px] text-gray-400 font-bold block uppercase">Laba Bersih</span>
+                                <span class="text-sm font-black text-emerald-600 block mt-0.5" id="dash-profit">Rp 0</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-gradient-to-br from-indigo-600 to-indigo-800 p-5 rounded-2xl text-white shadow-sm">
+                            <p class="text-[10px] uppercase tracking-widest opacity-75 font-bold">Total Saldo Kas Toko</p>
+                            <h2 class="text-2xl font-black mt-0.5" id="total-all-balance-display">Rp 0</h2>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+                            <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-gray-700">💼 Saldo Laci & Bank Toko</h3><button onclick="handleAddNewWallet(0)" class="text-[10px] bg-indigo-100 text-indigo-600 px-2.5 py-1 rounded-lg font-bold">+ Dompet Toko</button></div>
+                            <div id="wallets-grid-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
+                            <h4 class="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-2">Bagan Perputaran Uang Toko</h4>
+                            <div class="w-full max-w-[140px]"><canvas id="cashflowChart"></canvas></div>
+                        </div>
+                    </div>
+
+                    <!-- CATAT KAS TOKO -->
+                    <div id="page-transaction-biz" class="hidden space-y-4 class-page-box">
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+                            <h3 class="font-bold text-sm text-gray-700">📝 Input Pembukuan Toko</h3>
+                            <div class="space-y-2">
+                                <div class="grid grid-cols-2 gap-2">
+                                    <select id="tx-type" class="p-2.5 text-sm border rounded-xl bg-gray-50 text-gray-800 font-medium" onchange="handleTxTypeChange()">
+                                        <option value="IN">Pemasukan Toko (+)</option>
+                                        <option value="OUT">Pengeluaran Toko (-)</option>
+                                    </select>
+                                    <select id="tx-wallet-selector" class="p-2.5 text-sm border rounded-xl bg-gray-50 text-gray-700 font-medium"></select>
+                                </div>
+                                <input type="number" id="tx-amount" oninput="calculateLiveAllocation(0)" placeholder="Nominal Uang (Rp)" class="w-full p-2.5 text-sm border rounded-xl text-gray-800">
+                                <input type="text" id="tx-desc" placeholder="Keterangan Nota Belanja" class="w-full p-2.5 text-sm border rounded-xl text-gray-800">
+                                <div id="allocation-select-box" class="hidden">
+                                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Pilih Pos Alokasi Pengeluaran:</label>
+                                    <select id="tx-allocation-selector" class="w-full p-2.5 text-sm border rounded-xl bg-amber-50 font-bold text-amber-800 border-amber-100">
+                                        <option value="Umum">Umum / Tanpa Pos</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="allocation-box" class="bg-amber-50 border border-amber-100 p-3 rounded-xl hidden text-xs">
+                                <h4 class="font-bold text-amber-800 mb-1">💡 Rekomendasi Alokasi Omset:</h4>
+                                <ul id="live-allocation-list" class="text-amber-700 space-y-0.5 font-medium"></ul>
+                            </div>
+                            <button id="btn-submit-tx-biz" onclick="submitTransaction(0, this)" class="w-full bg-indigo-600 text-white p-2.5 rounded-xl font-bold text-sm shadow-sm hover:bg-indigo-700 transition-colors">Simpan Transaksi Toko</button>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-2">
+                            <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-gray-700">⚙️ Aturan Alokasi Toko (%)</h3><button onclick="handleAddNewRule(0)" class="text-xs text-indigo-600 font-bold">+ Tambah</button></div>
+                            <div id="rules-display-list" class="space-y-2"></div>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-2">
+                            <h3 class="font-bold text-sm text-gray-700">📑 Log Riwayat Catatan Toko</h3>
+                            <div class="flex gap-1 overflow-x-auto py-1 text-[10px]">
+                                <button onclick="setFilterTime('all', 0)" class="bg-indigo-600 text-white px-2.5 py-1 rounded-lg font-bold shrink-0" id="btn-f-shop-all">Semua</button>
+                                <button onclick="setFilterTime('kemarin', 0)" class="bg-gray-200 text-gray-600 px-2.5 py-1 rounded-lg font-semibold shrink-0" id="btn-f-shop-kemarin">Kemarin</button>
+                                <button onclick="setFilterTime('7hari', 0)" class="bg-gray-200 text-gray-600 px-2.5 py-1 rounded-lg font-semibold shrink-0" id="btn-f-shop-7hari">7 Hari</button>
+                                <button onclick="toggleCustomDate(0)" class="bg-gray-200 text-gray-600 px-2.5 py-1 rounded-lg font-semibold shrink-0" id="btn-f-shop-custom">Custom</button>
+                            </div>
+                            <div id="custom-date-box-shop" class="hidden flex items-center gap-2 text-xs bg-gray-50 p-2 rounded-xl">
+                                <input type="date" id="filter-start-date-shop" class="p-1 border rounded-lg">
+                                <span>s/d</span>
+                                <input type="date" id="filter-end-date-shop" class="p-1 border rounded-lg">
+                                <button onclick="applyCustomFilter(0)" class="bg-indigo-500 text-white px-2 py-1 rounded-lg font-bold">Cari</button>
+                            </div>
+                            <button onclick="exportToExcel(0)" class="w-full bg-green-600 text-white p-1.5 rounded-xl text-xs font-bold shadow-sm mt-2">🟢 Unduh Laporan (.csv)</button>
+                            <div id="transaction-history" class="space-y-2 pt-2 max-h-80 overflow-y-auto"></div>
+                        </div>
+                    </div>
+
+                    <!-- STOK INVENTORY -->
+                    <div id="page-inventory-biz" class="hidden space-y-4 class-page-box">
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+                            <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-gray-700">📦 Stok Inventory Sembako</h3><button onclick="addNewInventoryItem()" class="text-xs bg-indigo-600 text-white px-2.5 py-1 rounded-xl font-bold">+ Barang</button></div>
+                            <div id="inventory-list-display" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+                        </div>
+                    </div>
+
+                    <!-- UTANG & RENCANA TOKO -->
+                    <div id="page-debts-biz" class="hidden space-y-4 class-page-box">
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+                            <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-gray-700">📌 Buku Kas Bon Pelanggan & Sales</h3><button onclick="addNewDebt(0)" class="text-xs bg-red-100 text-red-600 px-2.5 py-1 rounded-xl font-bold">+ Bon</button></div>
+                            <div id="debt-list-display" class="space-y-2"></div>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+                            <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-gray-700">🎯 Rencana Tabungan Usaha</h3><button onclick="addNewGoal(0)" class="text-xs text-indigo-600 font-bold">+ Rencana</button></div>
+                            <div id="goals-display-list" class="space-y-3"></div>
+                        </div>
+                    </div>
+
+                    <!-- PUSAT MENU LAPORAN -->
+                    <div id="page-report-biz" class="hidden space-y-4 class-page-box">
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+                            <h3 class="font-black text-base text-indigo-700 flex items-center gap-2">📊 Pusat Laporan Analisis Toko</h3>
+                            
+                            <div class="bg-gray-50 p-3 rounded-xl border border-gray-200 space-y-2">
+                                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">📅 Filter Waktu Laporan:</label>
+                                <div class="flex flex-wrap gap-1 text-[10px]">
+                                    <button onclick="setReportTimeFilter('all')" id="btn-rep-f-all" class="bg-indigo-600 text-white px-2.5 py-1 rounded-lg font-bold">Semua</button>
+                                    <button onclick="setReportTimeFilter('hari_ini')" id="btn-rep-f-hari_ini" class="bg-gray-200 text-gray-600 px-2.5 py-1 rounded-lg font-semibold">Hari Ini</button>
+                                    <button onclick="setReportTimeFilter('kemarin')" id="btn-rep-f-kemarin" class="bg-gray-200 text-gray-600 px-2.5 py-1 rounded-lg font-semibold">Kemarin</button>
+                                    <button onclick="setReportTimeFilter('7hari')" id="btn-rep-f-7hari" class="bg-gray-200 text-gray-600 px-2.5 py-1 rounded-lg font-semibold">7 Hari</button>
+                                    <button onclick="setReportTimeFilter('30hari')" id="btn-rep-f-30hari" class="bg-gray-200 text-gray-600 px-2.5 py-1 rounded-lg font-semibold">30 Hari</button>
+                                    <button onclick="toggleReportCustomDate()" class="bg-gray-200 text-gray-600 px-2.5 py-1 rounded-lg font-semibold">Custom</button>
+                                </div>
+                                <div id="report-custom-date-box" class="hidden flex items-center gap-2 text-xs pt-1">
+                                    <input type="date" id="rep-start-date" class="p-1 border rounded-lg">
+                                    <span>s/d</span>
+                                    <input type="date" id="rep-end-date" class="p-1 border rounded-lg">
+                                    <button onclick="applyReportCustomFilter()" class="bg-indigo-500 text-white px-2 py-1 rounded-lg font-bold">Cari</button>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-3 gap-1 bg-gray-100 p-1 rounded-xl text-[10px] font-bold text-center">
+                                <button onclick="switchSubReport('sales')" id="sub-rep-sales" class="bg-white text-indigo-600 p-1.5 rounded-lg shadow-sm font-bold">Penjualan</button>
+                                <button onclick="switchSubReport('buy')" id="sub-rep-buy" class="text-gray-600 p-1.5 rounded-lg font-bold">Pembelian</button>
+                                <button onclick="switchSubReport('stock')" id="sub-rep-stock" class="text-gray-600 p-1.5 rounded-lg font-bold">Stok Aset</button>
+                                <button onclick="switchSubReport('debts')" id="sub-rep-debts" class="text-gray-600 p-1.5 rounded-lg font-bold">Hutang Bon</button>
+                                <button onclick="switchSubReport('opname')" id="sub-rep-opname" class="text-gray-600 p-1.5 rounded-lg font-bold">Stok Opname</button>
+                                <button onclick="switchSubReport('profit')" id="sub-rep-profit" class="text-gray-600 p-1.5 rounded-lg font-bold">Laba Rugi</button>
+                            </div>
+
+                            <hr class="border-gray-100">
+                            <div id="report-content-area" class="space-y-3 min-h-48"></div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ==================== AREA SEKTOR PRIBADI ==================== -->
+                <div id="sector-pribadi" class="hidden space-y-4">
+                    
+                    <!-- BERANDA PRIBADI -->
+                    <div id="page-home-priv" class="space-y-4 class-page-box">
+                        <div class="bg-gradient-to-br from-emerald-600 to-teal-800 p-5 rounded-2xl text-white shadow-sm">
+                            <p class="text-[10px] uppercase tracking-widest opacity-75 font-bold">Total Saldo Uang Pribadi</p>
+                            <h2 class="text-2xl font-black mt-0.5" id="total-private-balance-display">Rp 0</h2>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+                            <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-gray-700">👤 Dompet & Rekening Mandiri</h3><button onclick="handleAddNewWallet(1)" class="text-[10px] bg-emerald-100 text-emerald-600 px-2 py-1 rounded-lg font-bold">+ Dompet Pribadi</button></div>
+                            <div id="private-wallets-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
+                            <h4 class="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-2">Bagan Aliran Dana Pribadi</h4>
+                            <div class="w-full max-w-[140px]"><canvas id="privateCashflowChart"></canvas></div>
+                        </div>
+                    </div>
+
+                    <!-- CATAT KAS PRIBADI -->
+                    <div id="page-transaction-priv" class="hidden space-y-4 class-page-box">
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+                            <h3 class="font-bold text-sm text-emerald-700 flex items-center gap-1">💸 Catat Kas Anggaran Pribadi</h3>
+                            <div class="space-y-2">
+                                <div class="grid grid-cols-2 gap-2">
+                                    <select id="private-tx-type" class="p-2.5 text-sm border rounded-xl bg-gray-50 text-gray-800 font-medium" onchange="handlePrivateTxTypeChange()">
+                                        <option value="IN">Pemasukan Pribadi (+)</option>
+                                        <option value="OUT">Pengeluaran Pribadi (-)</option>
+                                    </select>
+                                    <select id="private-tx-wallet-selector" class="p-2.5 text-sm border rounded-xl bg-gray-50 text-gray-700 font-medium"></select>
+                                </div>
+                                <input type="number" id="private-tx-amount" oninput="calculateLiveAllocation(1)" placeholder="Nominal (Rp)" class="w-full p-2.5 text-sm border rounded-xl text-gray-800">
+                                <input type="text" id="private-tx-desc" placeholder="Keterangan Keperluan" class="w-full p-2.5 text-sm border rounded-xl text-gray-800">
+                                <div id="private-allocation-select-box" class="hidden">
+                                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Pilih Pos Anggaran:</label>
+                                    <select id="private-tx-allocation-selector" class="w-full p-2.5 text-sm border rounded-xl bg-emerald-50 font-bold text-emerald-800 border-emerald-100">
+                                        <option value="Umum">Umum / Tanpa Pos</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="private-allocation-box" class="bg-emerald-50 border border-emerald-100 p-3 rounded-xl hidden text-xs">
+                                <h4 class="font-bold text-emerald-800 mb-1">💡 Rekomendasi Pembagian Gaji:</h4>
+                                <ul id="private-live-allocation-list" class="text-emerald-700 space-y-0.5 font-medium"></ul>
+                            </div>
+                            <button id="btn-submit-tx-priv" onclick="submitTransaction(1, this)" class="w-full bg-emerald-600 text-white p-2.5 rounded-xl font-bold text-sm shadow-sm hover:bg-emerald-700 transition-colors">Simpan Transaksi Pribadi</button>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-2">
+                            <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-gray-700">⚙️ Pos Alokasi Pribadi (%)</h3><button onclick="handleAddNewRule(1)" class="text-xs text-emerald-600 font-bold">+ Tambah</button></div>
+                            <div id="private-rules-display-list" class="space-y-2"></div>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-2">
+                            <h3 class="font-bold text-sm text-gray-700">📑 Log Riwayat Transaksi Pribadi</h3>
+                            <div class="flex gap-1 overflow-x-auto py-1 text-[10px]">
+                                <button onclick="setFilterTime('all', 1)" class="bg-emerald-600 text-white px-2.5 py-1 rounded-lg font-bold shrink-0" id="btn-f-priv-all">Semua</button>
+                                <button onclick="setFilterTime('kemarin', 1)" class="bg-gray-200 text-gray-600 px-2.5 py-1 rounded-lg font-semibold shrink-0" id="btn-f-priv-kemarin">Kemarin</button>
+                                <button onclick="setFilterTime('7hari', 1)" class="bg-gray-200 text-gray-600 px-2.5 py-1 rounded-lg font-semibold shrink-0" id="btn-f-priv-7hari">7 Hari</button>
+                                <button onclick="toggleCustomDate(1)" class="bg-gray-200 text-gray-600 px-2.5 py-1 rounded-lg font-semibold shrink-0" id="btn-f-priv-custom">Custom</button>
+                            </div>
+                            <div id="custom-date-box-priv" class="hidden flex items-center gap-2 text-xs bg-gray-50 p-2 rounded-xl">
+                                <input type="date" id="filter-start-date-priv" class="p-1 border rounded-lg">
+                                <span>s/d</span>
+                                <input type="date" id="filter-end-date-priv" class="p-1 border rounded-lg">
+                                <button onclick="applyCustomFilter(1)" class="bg-emerald-500 text-white px-2 py-1 rounded-lg font-bold">Cari</button>
+                            </div>
+                            <button onclick="exportToExcel(1)" class="w-full bg-green-600 text-white p-1.5 rounded-xl text-xs font-bold shadow-sm mt-2">🟢 Unduh Uang Pribadi (.csv)</button>
+                            <div id="private-transaction-history" class="space-y-2 pt-1 max-h-80 overflow-y-auto"></div>
+                        </div>
+                    </div>
+
+                    <!-- UTANG & RENCANA PRIBADI -->
+                    <div id="page-debts-priv" class="hidden space-y-4 class-page-box">
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+                            <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-gray-700">📌 Buku Kas Bon Mandiri</h3><button onclick="addNewDebt(1)" class="text-xs bg-red-100 text-red-600 px-2.5 py-1 rounded-xl font-bold">+ Bon</button></div>
+                            <div id="debt-list-display-priv" class="space-y-2"></div>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+                            <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-gray-700">🎯 Rencana Tabungan Pribadi</h3><button onclick="addNewGoal(1)" class="text-xs text-emerald-600 font-bold">+ Rencana</button></div>
+                            <div id="goals-display-list-priv" class="space-y-3"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB NAVIGASI BAWAH HP -->
+            <div id="app-navigation-bar" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-xl py-2 px-3 flex justify-around items-center max-w-md mx-auto z-50 rounded-t-3xl text-[9px] font-bold sm:max-w-xl md:max-w-none md:relative md:rounded-3xl md:mt-6"></div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- DATA KONFIGURASI FIREBASE ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyB3h2Mp_SsNYVGqL51p9O-4xDhExiDbSGk",
+            authDomain: "apk-keuangan-bfbec.firebaseapp.com",
+            databaseURL: "https://apk-keuangan-bfbec-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "apk-keuangan-bfbec",
+            storageBucket: "apk-keuangan-bfbec.firebasestorage.app",
+            messagingSenderId: "944154197947",
+            appId: "1:944154197947:web:ba290de652b5b039c18e9e",
+            measurementId: "G-NC51JNSL00"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let currentUser = null;
+        let allWallets = [], activeRules = [], myChart = null, myPrivateChart = null;
+        let filterStartShop = '', filterEndShop = '', filterStartPriv = '', filterEndPriv = '';
+        let totalIncomeShop = 0, totalIncomePriv = 0, shopAllocationMap = {}, privAllocationMap = {};
+        let cacheGlobalTransactions = [], cacheInventory = [], cacheDebts = [], cacheGoals = [];
+        let activeSubReport = 'sales'; let reportFilterStart = '', reportFilterEnd = '';
+        let currentMode = 'bisnis';
+
+        let listenersAttached = false;
+
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('auth-section').classList.add('hidden');
+                document.getElementById('main-dashboard').classList.remove('hidden');
+                document.getElementById('mode-selector-box').classList.remove('hidden');
+                document.getElementById('btn-logout').classList.remove('hidden');
+                document.getElementById('user-display-name').innerText = user.email.split('@')[0];
+
+                if (!listenersAttached) {
+                    listenersAttached = true;
+                    try { listenRealtimeFirebase(); } catch(e) { console.error("Gagal memasang listener data:", e); }
+                }
+
+                try { switchAppMode('bisnis'); } catch(e) { console.error("Gagal merender tampilan awal:", e); }
+            } else {
+                currentUser = null;
+                listenersAttached = false;
+                document.getElementById('auth-section').classList.remove('hidden');
+                document.getElementById('main-dashboard').classList.add('hidden');
+                document.getElementById('mode-selector-box').classList.add('hidden');
+                document.getElementById('btn-logout').classList.add('hidden');
+            }
+        });
+
+        function switchAppMode(mode) {
+            currentMode = mode;
+            const appTitle = document.getElementById('app-title-display');
+            const btnBiz = document.getElementById('mode-btn-biz');
+            const btnPriv = document.getElementById('mode-btn-priv');
+            const bgWatermark = document.getElementById('app-watermark-bg');
+            
+            document.getElementById('sector-bisnis').classList.toggle('hidden', mode !== 'bisnis');
+            document.getElementById('sector-pribadi').classList.toggle('hidden', mode !== 'pribadi');
+            
+            if(mode === 'pribadi') {
+                document.body.classList.add('private-mode-active');
+                if(bgWatermark) bgWatermark.innerHTML = "kang.jell • 083814559667<br>PRIVATE SYSTEM";
+            } else {
+                document.body.classList.remove('private-mode-active');
+                if(bgWatermark) bgWatermark.innerHTML = "kang.jell • 083814559667<br>PRO FINANCE SYSTEM";
+            }
+
+            const navBox = document.getElementById('app-navigation-bar');
+
+            if(mode === 'bisnis') {
+                appTitle.innerText = "🏪 TokoKelontong Pro";
+                appTitle.className = "text-xl font-black text-indigo-600 tracking-tight";
+                btnBiz.className = "px-3 py-1.5 rounded-lg bg-indigo-600 text-white shadow-sm";
+                btnPriv.className = "px-3 py-1.5 rounded-lg text-gray-500 hover:bg-gray-200";
+                navBox.innerHTML = `
+                    <button onclick="switchMobilePage('home', this)" class="flex flex-col items-center gap-0.5 text-indigo-600 class-nav-btn w-[18%] py-1"><span class="text-lg">🏠</span><span>Beranda</span></button>
+                    <button onclick="switchMobilePage('transaction', this)" class="flex flex-col items-center gap-0.5 text-gray-400 class-nav-btn w-[18%] py-1"><span class="text-lg">📝</span><span>Catat Kas</span></button>
+                    <button onclick="switchMobilePage('inventory', this)" class="flex flex-col items-center gap-0.5 text-gray-400 class-nav-btn w-[18%] py-1"><span class="text-lg">📦</span><span>Stok Toko</span></button>
+                    <button onclick="switchMobilePage('debts', this)" class="flex flex-col items-center gap-0.5 text-gray-400 class-nav-btn w-[18%] py-1"><span class="text-lg">📌</span><span>Buku Bon</span></button>
+                    <button onclick="switchMobilePage('report', this)" class="flex flex-col items-center gap-0.5 text-gray-400 class-nav-btn w-[18%] py-1"><span class="text-lg">📊</span><span>Laporan</span></button>
+                `;
+            } else {
+                appTitle.innerText = "👤 Kas Pribadi Anda";
+                appTitle.className = "text-xl font-black text-emerald-600 tracking-tight";
+                btnPriv.className = "px-3 py-1.5 rounded-lg bg-emerald-600 text-white shadow-sm";
+                btnBiz.className = "px-3 py-1.5 rounded-lg text-gray-500 hover:bg-gray-200";
+                navBox.innerHTML = `
+                    <button onclick="switchMobilePage('home', this)" class="flex flex-col items-center gap-0.5 text-emerald-600 class-nav-btn w-[30%] py-1"><span class="text-lg">🏠</span><span>Beranda</span></button>
+                    <button onclick="switchMobilePage('transaction', this)" class="flex flex-col items-center gap-0.5 text-gray-400 class-nav-btn w-[30%] py-1"><span class="text-lg">💸</span><span>Catat Kas</span></button>
+                    <button onclick="switchMobilePage('debts', this)" class="flex flex-col items-center gap-0.5 text-gray-400 class-nav-btn w-[30%] py-1"><span class="text-lg">📌</span><span>Buku Bon</span></button>
+                `;
+            }
+            switchMobilePage('home', navBox.querySelector('.class-nav-btn'));
+        }
+
+        UX-MOBILE-PAGE-LOAD
+        function switchMobilePage(pageId, btnElement) {
+            document.querySelectorAll('.class-page-box').forEach(p => p.classList.add('hidden'));
+            const suffix = currentMode === 'bisnis' ? '-biz' : '-priv';
+            const targetPage = document.getElementById(`page-${pageId}${suffix}`);
+            if(targetPage) targetPage.classList.remove('hidden');
+            
+            document.querySelectorAll('.class-nav-btn').forEach(b => { b.classList.remove('text-indigo-600', 'text-emerald-600'); b.classList.add('text-gray-400'); });
+            if (btnElement) {
+                btnElement.classList.remove('text-gray-400');
+                btnElement.classList.add(currentMode === 'pribadi' ? 'text-emerald-600' : 'text-indigo-600');
+            }
+
+            if (currentUser) {
+                renderWallets();
+                renderTransactions();
+                renderInventory();
+                renderDebts();
+                renderGoals();
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        let isRegisterMode = false;
+        function toggleRegister() {
+            isRegisterMode = !isRegisterMode;
+            document.getElementById('auth-name').classList.toggle('hidden', !isRegisterMode);
+            document.getElementById('auth-title').innerText = isRegisterMode ? "Daftar Akun Baru" : "Masuk Aplikasi";
+            document.getElementById('toggle-btn').innerText = isRegisterMode ? "Sudah punya akun? Login" : "Belum punya akun? Daftar sekarang";
+        }
+
+        async function handleAuth() {
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value;
+
+            if (!email || !password) return alert("Mohon isi Email and Password terlebih dahulu.");
+
+            try {
+                if (isRegisterMode) {
+                    await auth.createUserWithEmailAndPassword(email, password);
+                    alert("Registrasi Online Berhasil! Silakan Login.");
+                    toggleRegister();
+                } else {
+                    await auth.signInWithEmailAndPassword(email, password);
+                }
+            } catch(e) {
+                if (e.code === 'auth/email-already-in-use') {
+                    alert("Email ini sudah terdaftar. Anda otomatis dipindahkan ke mode Masuk (Login) — silakan klik 'Lanjutkan' lagi dengan password akun Anda.");
+                    if (isRegisterMode) toggleRegister();
+                } else if (e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
+                    alert("Email atau Password salah / akun belum terdaftar. Jika belum punya akun, klik 'Daftar sekarang'.");
+                } else if (e.code === 'auth/invalid-email') {
+                    alert("Format email tidak valid. Mohon periksa kembali.");
+                } else if (e.code === 'auth/weak-password') {
+                    alert("Password terlalu lemah. Gunakan minimal 6 karakter.");
+                } else if (e.code === 'auth/network-request-failed') {
+                    alert("Tidak ada koneksi internet. Periksa jaringan Anda dan coba lagi.");
+                } else {
+                    alert("Peringatan: " + e.message);
+                }
+                console.error("Detail Error Auth:", e);
+            }
+        }
+
+        function handleLogout() { if(confirm("Keluar dari sistem?")) auth.signOut(); }
+
+        function renderGoals() {
+            const isPrivFlag = currentMode === 'pribadi' ? 1 : 0;
+            const filteredGoals = cacheGoals.filter(g => (g.is_private || 0) === isPrivFlag);
+            const color = currentMode === 'bisnis' ? 'bg-indigo-600' : 'bg-emerald-600';
+            const textColor = currentMode === 'bisnis' ? 'text-indigo-600' : 'text-emerald-600';
+            const htmlContent = filteredGoals.map(g => { 
+                const pct = Math.min(Math.round(((g.current_amount || 0) / g.target_amount) * 100), 100); 
+                return `<div class="text-xs bg-gray-50 p-2.5 rounded-xl border space-y-1"><div class="flex justify-between font-bold"><span>🎯 ${g.goal_name} (${pct}%)</span><button onclick="deleteGoal('${g.id}')" class="text-red-400 text-[10px]">Hapus</button></div><div class="w-full bg-gray-200 h-1.5 flex overflow-hidden rounded-full"><div class="${color} h-1.5 transition-all" style="width: ${pct}%"></div></div><div class="flex justify-between text-[10px] text-gray-400"><span>Target: Rp ${g.target_amount.toLocaleString('id-ID')}</span><button onclick="updateGoalAmount('${g.id}', ${g.current_amount || 0})" class="${textColor} font-bold hover:underline">Isi Dompet: Rp ${(g.current_amount || 0).toLocaleString('id-ID')}</button></div></div>`; 
+            }).join('') || '<p class="text-gray-400 text-center text-xs py-2">Belum ada target tabungan.</p>';
+            
+            const displayEl = document.getElementById(currentMode === 'bisnis' ? 'goals-display-list' : 'goals-display-list-priv');
+            if(displayEl) displayEl.innerHTML = htmlContent;
+        }
+
+        function listenRealtimeFirebase() {
+            if (!currentUser) return;
+            const uId = currentUser.uid;
+
+            db.collection('wallets').where('user_id', '==', uId).onSnapshot(snap => {
+                allWallets = snap.docs.map(d => ({ firestoreId: d.id, ...d.data() }));
+                renderWallets();
+            }, (error) => { console.error("Gagal memuat dompet:", error); alert("Gagal memuat data dompet: " + error.message); });
+
+            db.collection('allocation_rules').where('user_id', '==', uId).onSnapshot(snap => {
+                activeRules = snap.docs.map(d => ({ firestoreId: d.id, ...d.data() }));
+                const isPrivFlag = currentMode === 'pribadi' ? 1 : 0;
+                const shopRules = activeRules.filter(r => r.is_private === isPrivFlag);
+                const selElement = document.getElementById(currentMode === 'bisnis' ? 'tx-allocation-selector' : 'private-tx-allocation-selector');
+                if(selElement) selElement.innerHTML = `<option value="Umum">Umum / Tanpa Pos Anggaran</option>` + shopRules.map(r => `<option value="${r.category_name}">${r.category_name}</option>`).join('');
+                displayRulesWithBudgetStatus();
+            }, (error) => { console.error("Gagal memuat aturan alokasi:", error); });
+
+            db.collection('inventory').where('user_id', '==', uId).onSnapshot(snap => {
+                cacheInventory = snap.docs.map(d => ({ firestoreId: d.id, ...d.data() }));
+                if (currentMode === 'bisnis') renderInventory();
+            }, (error) => { console.error("Gagal memuat inventory:", error); });
+
+            db.collection('debts').where('user_id', '==', uId).onSnapshot(snap => {
+                cacheDebts = snap.docs.map(d => ({ firestoreId: d.id, ...d.data() }));
+                renderDebts();
+            }, (error) => { console.error("Gagal memuat data bon:", error); });
+
+            db.collection('saving_goals').where('user_id', '==', uId).onSnapshot(snap => {
+                cacheGoals = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderGoals();
+            }, (error) => { console.error("Gagal memuat target tabungan:", error); });
+
+            db.collection('transactions').where('user_id', '==', uId).onSnapshot(snap => {
+                cacheGlobalTransactions = snap.docs.map(d => ({ firestoreId: d.id, ...d.data() }));
+                cacheGlobalTransactions.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+                renderTransactions();
+            }, (error) => {
+                console.error("Gagal memuat transaksi:", error);
+                alert("Gagal memuat data transaksi dari cloud. Alasan: " + error.message);
+            });
+        }
+
+        function renderWallets() {
+            const isPrivFlag = currentMode === 'pribadi' ? 1 : 0;
+            const filtered = allWallets.filter(w => w.is_private === isPrivFlag);
+            let total = 0;
+
+            const htmlContent = filtered.map(w => {
+                total += parseFloat(w.balance || 0);
+                return `
+                    <div class="bg-gray-50 border border-gray-200 p-2.5 rounded-xl flex justify-between items-center text-xs">
+                        <div><p class="font-bold text-gray-400 uppercase text-[9px]">${w.name}</p><p class="text-sm font-black mt-0.5">Rp ${parseFloat(w.balance || 0).toLocaleString('id-ID')}</p></div>
+                        <button onclick="editWalletMenu('${w.firestoreId}', '${w.name}', ${w.balance})" class="text-[10px] text-indigo-500 font-bold bg-white px-2 py-1 border rounded-lg shadow-sm">Atur</button>
+                    </div>`;
+            }).join('');
+
+            if(currentMode === 'bisnis') {
+                const elGrid = document.getElementById('wallets-grid-list');
+                if(elGrid) elGrid.innerHTML = htmlContent;
+                document.getElementById('total-all-balance-display').innerText = "Rp " + total.toLocaleString('id-ID');
+                const sel = document.getElementById('tx-wallet-selector');
+                if(sel) sel.innerHTML = filtered.map(w => `<option value="${w.firestoreId}">${w.name}</option>`).join('');
+            } else {
+                const elPriv = document.getElementById('private-wallets-list');
+                if(elPriv) elPriv.innerHTML = htmlContent;
+                document.getElementById('total-private-balance-display').innerText = "Rp " + total.toLocaleString('id-ID');
+                const selPriv = document.getElementById('private-tx-wallet-selector');
+                if(selPriv) selPriv.innerHTML = filtered.map(w => `<option value="${w.firestoreId}">${w.name}</option>`).join('');
+            }
+        }
+
+        async function editWalletMenu(fid, oldName, oldBalance) {
+            const action = prompt("Ketik '1' untuk Ubah Identitas Dompet\nKetik '2' untuk Hapus Dompet Selamanya:");
+            if (action === "1") {
+                const newName = prompt("Ubah Nama Akun/Dompet Anda:", oldName); if (!newName) return;
+                const newBalanceStr = prompt("Sesuaikan Saldo Akhir Dompet:", oldBalance); if (!newBalanceStr) return;
+                await db.collection('wallets').doc(fid).update({ name: newName, balance: parseFloat(newBalanceStr) });
+            } else if (action === "2") {
+                if (confirm(`Hapus dompet "${oldName}"?`)) { await db.collection('wallets').doc(fid).delete(); }
+            }
+        }
+
+        function renderInventory() {
+            let totalBuyPriceSum = 0; let totalSoldQty = 0;
+            const displayEl = document.getElementById('inventory-list-display');
+            if(!displayEl) return;
+            
+            displayEl.innerHTML = cacheInventory.map(i => {
+                const profitPerItem = parseFloat(i.sell_price || 0) - parseFloat(i.buy_price || 0); const isStockLow = i.current_stock <= 5;
+                const soldQty = i.initial_stock - i.current_stock;
+                if (soldQty > 0) { totalBuyPriceSum += (soldQty * parseFloat(i.buy_price || 0)); totalSoldQty += soldQty; }
+                return `
+                    <div class="border p-3 rounded-2xl flex flex-col gap-2 text-xs bg-white border-gray-200 relative overflow-hidden">
+                        ${isStockLow ? `<div class="absolute top-0 right-0 bg-red-600 text-white font-black px-3 py-0.5 rounded-bl-xl text-[9px]">🚨 STOK MINIM</div>` : ''}
+                        <div class="font-black text-sm text-gray-800">🛒 ${i.item_name}</div>
+                        <div class="grid grid-cols-3 gap-1 bg-gray-50 p-2 rounded-xl border border-gray-100 font-medium text-gray-600 text-[10px]">
+                            <div>Beli: <span class="block font-bold text-gray-900">Rp ${parseFloat(i.buy_price || 0).toLocaleString('id-ID')}</span></div>
+                            <div>Jual: <span class="block font-bold text-gray-900">Rp ${parseFloat(i.sell_price || 0).toLocaleString('id-ID')}</span></div>
+                            <div>Profit: <span class="block font-bold text-emerald-600">+Rp ${profitPerItem.toLocaleString('id-ID')}</span></div>
+                        </div>
+                        <div class="flex justify-between items-center pt-1">
+                            <div class="text-[10px] text-gray-500 font-semibold">Awal: ${i.initial_stock} | Sisa: <span class="font-black ${isStockLow?'text-red-600':'text-indigo-600'}">${i.current_stock} Pcs</span></div>
+                            <div class="flex gap-1">
+                                <button onclick="adjustStock('${i.firestoreId}', ${i.current_stock}, 1, '${i.item_name}', ${i.buy_price}, ${i.sell_price})" class="bg-green-600 text-white font-bold px-2 py-1 rounded-lg text-[9px]">+ Pasokan</button>
+                                <button onclick="adjustStock('${i.firestoreId}', ${i.current_stock}, -1, '${i.item_name}', ${i.buy_price}, ${i.sell_price})" class="bg-amber-500 text-white font-bold px-2 py-1 rounded-lg text-[9px]">- Keluar</button>
+                                <button onclick="deleteInventoryItem('${i.firestoreId}')" class="text-gray-300 font-bold px-1 text-xs">✖</button>
+                            </div>
+                        </div>
+                    </div>`;
+            }).join('') || '<p class="text-gray-400 text-center text-xs py-4 col-span-full">Gudang kosong.</p>';
+            
+            document.getElementById('dash-hpp').innerText = "Rp " + totalBuyPriceSum.toLocaleString('id-ID');
+            document.getElementById('dash-sales-qty').innerText = totalSoldQty + " Pcs Terjual";
+        }
+
+        async function adjustStock(docId, currentStock, modifier, itemName, buyPrice, sellPrice) {
+            let qtyChange = parseInt(prompt("Masukkan jumlah kuantitas:")); if (!qtyChange || qtyChange <= 0) return;
+            let newStock = currentStock + (modifier * qtyChange); if (newStock < 0) return alert("Stok tidak mencukupi!");
+
+            let reason = ""; let txType = ""; let finalAmount = 0;
+            if (modifier > 0) {
+                let opt = prompt("Pilih Jenis Pasokan Masuk:\n1. Pembelian / Kulakan Barang\n2. Hasil Produksi Sendiri\n3. Lain-lain", "1");
+                if (opt === "1") { reason = "Kulakan Barang"; txType = "OUT"; finalAmount = parseFloat(buyPrice || 0) * qtyChange; }
+                else if (opt === "2") { reason = "Hasil Produksi"; txType = ""; }
+                else { reason = "Pasokan Lainnya"; }
+            } else {
+                let opt = prompt("Pilih Alasan Stok Keluar:\n1. Penjualan Barang\n2. Barang Rusak / Kadaluarsa\n3. Pemakaian Pribadi (Owner)", "1");
+                if (opt === "1") { reason = "Penjualan"; txType = "IN"; finalAmount = parseFloat(sellPrice || 0) * qtyChange; }
+                else if (opt === "2") { reason = "Barang Rusak"; txType = "OUT"; finalAmount = parseFloat(buyPrice || 0) * qtyChange; }
+                else { reason = "Pemakaian Pribadi"; }
+            }
+
+            let walletId = null;
+            if (txType !== "") {
+                const bWallets = allWallets.filter(w => w.is_private === 0);
+                if (bWallets.length === 0) return alert("Buat akun laci kas toko dulu!");
+                walletId = bWallets[0].firestoreId;
+                const updatedBalance = parseFloat(bWallets[0].balance || 0) + (txType === 'IN' ? finalAmount : -finalAmount);
+                await db.collection('wallets').doc(walletId).update({ balance: updatedBalance });
+            }
+
+            const d = new Date();
+            const now = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().replace('T', ' ').substring(0, 19);
+            const desc = modifier < 0 && reason === "Penjualan" ? `Penjualan - ${itemName} (${qtyChange} Pcs)` : `[Stok] ${reason} - ${itemName} (${qtyChange} Pcs) Mdl:Rp ${buyPrice}`;
+
+            await db.collection('inventory').doc(docId).update({ current_stock: newStock });
+            if (txType !== "" || reason === "Pemakaian Pribadi" || reason === "Hasil Production") {
+                await db.collection('transactions').add({ user_id: currentUser.uid, wallet_id: walletId || '', amount: finalAmount, type: txType || 'OUT', description: desc, is_private: 0, category_allocation: 'Umum', created_at: now });
+            }
+        }
+
+        function renderTransactions() {
+            const isPrivFlag = currentMode === 'pribadi' ? 1 : 0;
+            const filtered = cacheGlobalTransactions.filter(t => t.is_private === isPrivFlag);
+
+            const filterDataByDate = (arr, s, e) => {
+                if (!s || !e) return arr;
+                return arr.filter(t => t.created_at.split(' ')[0] >= s && t.created_at.split(' ')[0] <= e);
+            };
+
+            const targetList = filterDataByDate(filtered, currentMode === 'bisnis' ? filterStartShop : filterStartPriv, currentMode === 'bisnis' ? filterEndShop : filterEndPriv);
+            let totalIn = 0, totalOut = 0;
+            
+            if(currentMode === 'bisnis') {
+                totalIncomeShop = 0; shopAllocationMap = {};
+                targetList.forEach(t => { if(t.type === 'IN') { totalIncomeShop += parseFloat(t.amount || 0); totalIn += parseFloat(t.amount || 0); } else { totalOut += parseFloat(t.amount || 0); } });
+                targetList.forEach(t => { if(t.type === 'OUT' && t.category_allocation !== 'Umum') shopAllocationMap[t.category_allocation] = (shopAllocationMap[t.category_allocation] || 0) + parseFloat(t.amount || 0); });
+            } else {
+                totalIncomePriv = 0; privAllocationMap = {};
+                targetList.forEach(t => { if(t.type === 'IN') { totalIncomePriv += parseFloat(t.amount || 0); totalIn += parseFloat(t.amount || 0); } else { totalOut += parseFloat(t.amount || 0); } });
+                targetList.forEach(t => { if(t.type === 'OUT' && t.category_allocation !== 'Umum') privAllocationMap[t.category_allocation] = (privAllocationMap[t.category_allocation] || 0) + parseFloat(t.amount || 0); });
+            }
+
+            const historyContainer = document.getElementById(currentMode === 'bisnis' ? 'transaction-history' : 'private-transaction-history');
+            if(historyContainer) {
+                historyContainer.innerHTML = targetList.map(t => {
+                    const parts = t.created_at.split(' '); const dateParts = parts[0].split('-');
+                    return `
+                        <div class="bg-gray-50 p-2.5 rounded-xl flex justify-between items-center text-xs border border-gray-100 mb-1">
+                            <div><p class="font-bold text-gray-800">${t.description}</p><p class="text-[9px] text-gray-400 font-mono">${dateParts[2] || '00'}/${dateParts[1] || '00'} ${parts[1]?.slice(0,5) || ''} ${t.type === 'OUT' ? `• Pos: ${t.category_allocation}` : ''}</p></div>
+                            <div class="text-right flex items-center gap-2"><span class="font-black ${t.type==='IN'?'text-green-600':'text-red-600'}">${t.type==='IN'?'+':'-'} Rp ${parseFloat(t.amount || 0).toLocaleString('id-ID')}</span><button onclick="deleteTransaction('${t.firestoreId}')" class="text-red-400 text-sm">✖</button></div>
+                        </div>`;
+                }).join('') || '<p class="text-gray-400 text-center text-xs py-4">Belum ada riwayat transaksi.</p>';
+            }
+
+            const perfText = document.getElementById('perf-text-smart');
+            if (currentMode === 'bisnis') {
+                document.getElementById('dash-sales').innerText = "Rp " + totalIn.toLocaleString('id-ID');
+                document.getElementById('dash-profit').innerText = "Rp " + (totalIn - totalOut).toLocaleString('id-ID');
+                if(perfText) perfText.innerText = totalIn > totalOut ? "📈 Performa Surplus! Laba kas masuk toko berjalan lebih tinggi dibanding pengeluaran." : "🚨 Defisit Toko! Pengeluaran belanja modal melampaui omset harian.";
+            } else {
+                if(perfText) perfText.innerText = totalIn >= totalOut ? "🟢 Keuangan pribadi aman dan terkendali." : "⚠️ Pengeluaran pribadi bulanan Anda terpantau membengkak.";
+            }
+            
+            updateCharts(currentMode === 'bisnis' ? totalIn : 0, currentMode === 'bisnis' ? totalOut : 0, currentMode === 'pribadi' ? totalIn : 0, currentMode === 'pribadi' ? totalOut : 0);
+            displayRulesWithBudgetStatus();
+            renderReportModule();
+        }
+
+        function displayRulesWithBudgetStatus() {
+            const isPrivFlag = currentMode === 'pribadi' ? 1 : 0;
+            const filteredRules = activeRules.filter(r => r.is_private === isPrivFlag);
+            const currentMap = currentMode === 'bisnis' ? shopAllocationMap : privAllocationMap;
+            const currentInc = currentMode === 'bisnis' ? totalIncomeShop : totalIncomePriv;
+
+            const html = filteredRules.map(r => {
+                const maxBudget = (parseFloat(r.percentage || 0) / 100) * currentInc;
+                const currentSpent = currentMap[r.category_name] || 0;
+                const remainingBudget = maxBudget - currentSpent;
+                return `
+                    <div class="p-2.5 rounded-xl border text-xs ${remainingBudget < 0 ? 'bg-red-50 border-red-200 text-red-900' : 'bg-gray-50 border-gray-100'}">
+                        <div class="flex justify-between items-center mb-1"><span class="font-bold">📌 ${r.category_name} (${r.percentage}%)</span><div class="flex gap-2 text-[10px]"><button onclick="editRule('${r.firestoreId}')" class="text-blue-500 font-bold">Edit</button><button onclick="deleteRule('${r.firestoreId}')" class="text-red-500 font-bold">Hapus</button></div></div>
+                        <div class="grid grid-cols-3 gap-1 font-medium opacity-90 text-[10px]">
+                            <div>Batas:<span class="block font-bold">Rp ${Math.round(maxBudget).toLocaleString('id-ID')}</span></div>
+                            <div>Pakai:<span class="block font-bold">Rp ${currentSpent.toLocaleString('id-ID')}</span></div>
+                            <div>Sisa:<span class="block ${remainingBudget < 0 ? 'text-red-600 font-black' : 'text-emerald-600 font-black'}">Rp ${Math.round(remainingBudget).toLocaleString('id-ID')}</span></div>
+                        </div>
+                    </div>`;
+            }).join('') || '<p class="text-gray-400 text-center text-xs">Belum ada aturan anggaran.</p>';
+
+            const targetListElement = document.getElementById(currentMode === 'bisnis' ? 'rules-display-list' : 'private-rules-display-list');
+            if(targetListElement) targetListElement.innerHTML = html;
+        }
+
+        function renderDebts() {
+            const isPrivFlag = currentMode === 'pribadi' ? 1 : 0;
+            const filteredDebts = cacheDebts.filter(d => (d.is_private || 0) === isPrivFlag);
+            const htmlContent = filteredDebts.map(d => `
+                <div class="bg-gray-50 border border-gray-100 p-2.5 rounded-xl flex justify-between items-center text-xs mb-1">
+                    <div class="space-y-0.5"><p class="font-bold text-gray-800">${d.person_name} <span class="text-[9px] font-bold ${d.type==='UTANG'?'text-amber-600':'text-blue-600'}">[${d.type}]</span></p><p class="text-[10px] text-gray-400 font-mono">Tempo: ${d.due_date||'-'}</p></div>
+                    <div class="text-right flex items-center gap-2">
+                        <div class="flex flex-col text-right"><span class="font-black text-gray-700">Rp ${parseFloat(d.amount || 0).toLocaleString('id-ID')}</span><span class="text-[9px] font-bold ${d.status==='LUNAS'?'text-green-600':'text-red-500'}">${d.status}</span></div>
+                        ${d.status==='BELUM LUNAS' ? `<button onclick="toggleDebtStatus('${d.firestoreId}', 'LUNAS')" class="bg-white text-indigo-600 px-2 py-1 border rounded-lg font-bold text-[10px] shadow-sm">Set Lunas</button>` : ''}
+                        <button onclick="deleteDebt('${d.firestoreId}')" class="text-gray-300 font-bold ml-1">✖</button>
+                    </div>
+                </div>`).join('') || '<p class="text-gray-400 text-center text-xs py-2">Buku bon kosong.</p>';
+
+            const el = document.getElementById(currentMode === 'bisnis' ? 'debt-list-display' : 'debt-list-display-priv');
+            if(el) el.innerHTML = htmlContent;
+        }
+
+        async function submitTransaction(isPrivate, btnEl) {
+            if (!currentUser) return alert("Sesi Anda belum login / sudah habis. Silakan login ulang.");
+            if (btnEl && btnEl.dataset.busy === '1') return;
+
+            const prefix = isPrivate === 1 ? 'private-' : '';
+            const amountEl = document.getElementById(`${prefix}tx-amount`);
+            const descEl = document.getElementById(`${prefix}tx-desc`);
+            const typeEl = document.getElementById(`${prefix}tx-type`);
+            const walletEl = document.getElementById(`${prefix}tx-wallet-selector`);
+            const allocationEl = document.getElementById(`${prefix}tx-allocation-selector`);
+
+            if (!amountEl || !descEl || !typeEl || !walletEl) return alert("Elemen Form tidak ditemukan.");
+
+            const amount = parseFloat(amountEl.value);
+            const desc = descEl.value.trim();
+            const type = typeEl.value;
+            const wallet_id = walletEl.value;
+            
+            if (!amount || amount <= 0) return alert("Mohon masukkan nominal uang yang valid!");
+            if (!desc) return alert("Mohon isi keterangan transaksi!");
+            if (!wallet_id) return alert("Pilih akun dompet terlebih dahulu.");
+
+            let allocation = 'Umum';
+            if (type === 'OUT' && allocationEl && allocationEl.value) allocation = allocationEl.value;
+
+            const originalLabel = btnEl ? btnEl.innerText : '';
+            if (btnEl) { 
+                btnEl.dataset.busy = '1'; 
+                btnEl.disabled = true; 
+                btnEl.classList.add('opacity-60'); 
+                btnEl.innerText = 'Menyimpan...'; 
+            }
+
+            try {
+                const selectedW = allWallets.find(w => w.firestoreId === wallet_id);
+                if (!selectedW) throw new Error("Dompet tidak ditemukan.");
+
+                const currentBal = parseFloat(selectedW.balance || 0);
+                const newBalance = currentBal + (type === 'IN' ? amount : -amount);
+                
+                if (type === 'OUT' && newBalance < 0 && !confirm("Peringatan: Saldo dompet akan minus. Lanjutkan?")) {
+                    if (btnEl) {
+                        btnEl.dataset.busy = '0';
+                        btnEl.disabled = false;
+                        btnEl.classList.remove('opacity-60');
+                        btnEl.innerText = originalLabel;
+                    }
+                    return;
+                }
+
+                const d = new Date();
+                const now = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().replace('T', ' ').substring(0, 19);
+
+                await db.collection('wallets').doc(wallet_id).update({ balance: newBalance });
+                await db.collection('transactions').add({ 
+                    user_id: currentUser.uid, 
+                    wallet_id, 
+                    amount, 
+                    type, 
+                    description: desc, 
+                    category_allocation: allocation, 
+                    is_private: isPrivate, 
+                    created_at: now 
+                });
+                
+                amountEl.value = ''; 
+                descEl.value = '';
+                if (document.getElementById(`${prefix}allocation-box`)) document.getElementById(`${prefix}allocation-box`).classList.add('hidden');
+                alert("🎉 Transaksi Berhasil Disimpan!");
+            } catch (error) {
+                console.error("Error Simpan Transaksi:", error);
+                alert("Gagal menyimpan: " + error.message);
+            } finally { // PERBAIKAN: Mengganti kata typo 'fillallback' menjadi 'finally'
+                if (btnEl) { 
+                    btnEl.dataset.busy = '0'; 
+                    btnEl.disabled = false; 
+                    btnEl.classList.remove('opacity-60'); 
+                    btnEl.innerText = originalLabel; 
+                }
+            }
+        }
+
+        async function deleteTransaction(id) {
+            if(confirm("Hapus catatan transaksi? Saldo dompet akan disesuaikan kembali.")) {
+                try {
+                    const t = cacheGlobalTransactions.find(tx => tx.firestoreId === id);
+                    if(!t) return;
+                    const w = allWallets.find(wallet => wallet.firestoreId === t.wallet_id);
+                    if (w) {
+                        const currentBal = parseFloat(w.balance || 0);
+                        const transAmt = parseFloat(t.amount || 0);
+                        const restoredBalance = currentBal + (t.type === 'IN' ? -transAmt : transAmt);
+                        await db.collection('wallets').doc(t.wallet_id).update({ balance: restoredBalance });
+                    }
+                    await db.collection('transactions').doc(id).delete();
+                } catch(e) {
+                    alert("Gagal menghapus transaksi: " + e.message);
+                }
+            }
+        }
+
+        async function handleAddNewWallet(isPriv) {
+            let contextMode = isPriv === 1 ? 'Pribadi' : 'Baru';
+            let name = prompt(`Nama Akun/Dompet ${contextMode}:`); if(!name) return;
+            await db.collection('wallets').add({ user_id: currentUser.uid, name, balance: 0, is_private: isPriv });
+        }
+        async function handleAddNewRule(isPriv) {
+            let name = prompt("Nama Pos Anggaran:"); let pct = parseInt(prompt("Persen (1-100):")); if(!name || !pct) return;
+            await db.collection('allocation_rules').add({ user_id: currentUser.uid, category_name: name, percentage: pct, is_private: isPriv });
+        }
+        
+        async function editRule(fid) {
+            let target = activeRules.find(r => r.firestoreId === fid);
+            if(!target) return alert("Aturan tidak ditemukan.");
+            let name = prompt("Ubah Nama Pos Anggaran:", target.category_name); 
+            let pct = prompt("Ubah Persentase (%):", target.percentage); 
+            if(!name || !pct) return;
+            await db.collection('allocation_rules').doc(fid).update({ category_name: name, percentage: parseInt(pct) });
+        }
+        async function deleteRule(fid) { 
+            if(confirm("Hapus anggaran ini?")) {
+                await db.collection('allocation_rules').doc(fid).delete(); 
+            }
+        }
+
+        async function addNewInventoryItem() {
+            let name = prompt("Nama Barang Sembako:"); let buy = parseFloat(prompt("Harga Beli Modal (Rp):")); let sell = parseFloat(prompt("Harga Jual Toko (Rp):")); let stock = parseInt(prompt("Jumlah Stok Masuk:"));
+            if(!name || !buy || !sell || !stock) return;
+            await db.collection('inventory').add({ user_id: currentUser.uid, item_name: name, initial_stock: stock, current_stock: stock, buy_price: buy, sell_price: sell });
+        }
+        async function deleteInventoryItem(id) { if(confirm("Hapus barang?")) await db.collection('inventory').doc(id).delete(); }
+        async function addNewDebt(isPriv) {
+            let name = prompt("Nama:"); let amount = prompt("Nominal (Rp):"); if(!name || !amount) return;
+            let typeOpt = prompt("Ketik '1' untuk PIUTANG\nKetik '2' untuk UTANG:", "1");
+            let due = prompt("Jatuh Tempo (YYYY-MM-DD):");
+            await db.collection('debts').add({ user_id: currentUser.uid, person_name: name, amount: parseFloat(amount), type: typeOpt === '2' ? 'UTANG' : 'PIUTANG', due_date: due, status: 'BELUM LUNAS', is_private: isPriv || 0 });
+        }
+        async function toggleDebtStatus(fid, status) { await db.collection('debts').doc(fid).update({ status: status }); }
+        async function deleteDebt(fid) { if(confirm("Hapus bon ini?")) await db.collection('debts').doc(fid).delete(); }
+        async function addNewGoal(isPriv) {
+            let name = prompt("Nama Target:"); let target = prompt("Nominal Target:"); if(!name || !target) return;
+            await db.collection('saving_goals').add({ user_id: currentUser.uid, goal_name: name, target_amount: parseFloat(target), current_amount: 0, is_private: isPriv || 0 });
+        }
+        async function updateGoalAmount(fid, current) {
+            let val = prompt("Total Tabungan Terkumpul Sekarang (Rp):", current); if(!val) return;
+            await db.collection('saving_goals').doc(fid).update({ current_amount: parseFloat(val) });
+        }
+        async function deleteGoal(id) { if(confirm("Hapus target?")) await db.collection('saving_goals').doc(id).delete(); }
+
+        async function exportToExcel(isPrivate) {
+            if (!currentUser) return alert("Silakan login.");
+            try {
+                const targetList = cacheGlobalTransactions.filter(t => t.is_private === isPrivate); if (targetList.length === 0) return alert("Belum ada transaksi.");
+                const watermarkHeader = ["# LISENSI APLIKASI PERMANEN: KANG JELL (WA 083814559667 / IG @kang.jell) #"];
+                const headers = ["No", "Tanggal", "Waktu", "Jenis", "Nominal (Rp)", "Keterangan", "Pos Alokasi"];
+                const rows = targetList.map((t, i) => { const parts = (t.created_at || '').split(' '); const dateParts = (parts[0] || '').split('-'); const tgl = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : (parts[0] || '-'); return [i + 1, `"${tgl}"`, `"${parts[1] ? parts[1].slice(0, 5) : '-'}"`, t.type === 'IN' ? 'MASUK' : 'KELUAR', t.amount, `"${(t.description || '-').replace(/"/g, '""')}"`, `"${(t.category_allocation || 'Umum').replace(/"/g, '""')}"`].join(','); });
+                const csvContent = [watermarkHeader.join(','), '', headers.join(','), ...rows].join('\n'); const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `Pembukuan_${isPrivate===1?'Pribadi':'Toko'}_${new Date().toISOString().split('T')[0]}.csv`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+            } catch(e) { alert("Gagal unduh CSV: " + e.message); }
+        }
+
+        function toggleReportCustomDate() { document.getElementById('report-custom-date-box').classList.toggle('hidden'); }
+        function applyReportCustomFilter() { reportFilterStart = document.getElementById('rep-start-date').value; reportFilterEnd = document.getElementById('rep-end-date').value; renderReportModule(); }
+        
+        function setReportTimeFilter(type) {
+            const today = new Date(); const formatDate = (d) => d.toISOString().split('T')[0];
+            let start = '', end = '';
+            if (type === 'hari_ini') { start = formatDate(today); end = formatDate(today); }
+            else if (type === 'kemarin') { const yest = new Date(); yest.setDate(today.getDate() - 1); start = formatDate(yest); end = formatDate(yest); }
+            else if (type === '7hari') { const p7 = new Date(); p7.setDate(today.getDate() - 7); start = formatDate(p7); end = formatDate(today); }
+            else if (type === '30hari') { const p30 = new Date(); p30.setDate(today.getDate() - 30); start = formatDate(p30); end = formatDate(today); }
+            
+            if(type !== 'custom') { reportFilterStart = start; reportFilterEnd = end; document.getElementById('report-custom-date-box').classList.add('hidden'); }
+            
+            ['all', 'hari_ini', 'kemarin', '7hari', '30hari'].forEach(b => {
+                const el = document.getElementById(`btn-rep-f-${b}`);
+                if(el) el.className = (b === type) ? "bg-indigo-600 text-white px-2.5 py-1 rounded-lg font-bold" : "bg-gray-200 text-gray-600 px-2.5 py-1 rounded-lg font-semibold";
+            });
+            renderReportModule();
+        }
+        function switchSubReport(type) { activeSubReport = type; document.querySelectorAll("[id^='sub-rep-']").forEach(btn => btn.className = btn.id === `sub-rep-${type}` ? "bg-white text-indigo-600 p-1.5 rounded-lg shadow-sm font-bold" : "text-gray-600 p-1.5 rounded-lg font-bold"); renderReportModule(); }
+
+        function renderReportModule() {
+            const container = document.getElementById('report-content-area'); if (!container) return;
+            const bizTxs = cacheGlobalTransactions.filter(t => t.is_private === 0);
+            const filtered = bizTxs.filter(t => !reportFilterStart || (t.created_at.split(' ')[0] >= reportFilterStart && t.created_at.split(' ')[0] <= reportFilterEnd));
+
+            if (activeSubReport === 'sales') {
+                const list = filtered.filter(t => t.type === 'IN' || t.description.includes('Penjualan'));
+                let totalFinansial = list.reduce((a, b) => a + (b.type === 'IN' ? parseFloat(b.amount || 0) : 0), 0);
+
+                let itemQtyMap = {}; cacheInventory.forEach(i => { itemQtyMap[i.item_name] = 0; });
+                list.forEach(t => {
+                    const match = t.description.match(/Penjualan\s*-\s*(.+?)\s*\((\d+)\s*Pcs\)/i);
+                    if(match) {
+                        const namePart = match[1].trim(); const qty = parseInt(match[2]) || 0;
+                        const matchKey = Object.keys(itemQtyMap).find(k => k.toLowerCase() === namePart.toLowerCase()) || namePart;
+                        itemQtyMap[matchKey] = (itemQtyMap[matchKey] || 0) + qty;
+                    }
+                });
+
+                let sortedItems = Object.keys(itemQtyMap).map(k => ({ name: k, qty: itemQtyMap[k] })).sort((a,b) => b.qty - a.qty);
+                let terlaris = sortedItems.filter(i => i.qty > 0).slice(0, 3);
+                let slowMoving = sortedItems.slice().reverse().slice(0, 3);
+
+                container.innerHTML = `
+                    <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 text-blue-900 flex justify-between items-center text-xs">
+                        <div><p class="font-bold text-[10px] uppercase opacity-70">Total Nilai Penjualan</p><p class="text-lg font-black mt-0.5">Rp ${totalFinansial.toLocaleString('id-ID')}</p></div><span class="text-2xl">📈</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs mt-2">
+                        <div class="bg-green-50 border border-green-100 p-2.5 rounded-xl text-green-900"><p class="font-bold text-[10px] uppercase text-green-700">🔥 3 Produk Terlaris (Qty)</p><ul class="list-disc list-inside mt-1 space-y-0.5 font-medium text-[11px]">${terlaris.map(i => `<li>${i.name} (${i.qty} Pcs)</li>`).join('') || 'Belum ada data.'}</ul></div>
+                        <div class="bg-amber-50 border border-amber-100 p-2.5 rounded-xl text-amber-900"><p class="font-bold text-[10px] uppercase text-amber-700">🐢 3 Produk Slow Item</p><ul class="list-disc list-inside mt-1 space-y-0.5 font-medium text-[11px]">${slowMoving.map(i => `<li>${i.name} (${i.qty} Pcs)</li>`).join('') || 'Belum ada data.'}</ul></div>
+                    </div>`;
+            } 
+            else if (activeSubReport === 'profit') {
+                let pendapatan = filtered.filter(t => t.type === 'IN').reduce((a, b) => a + parseFloat(b.amount || 0), 0);
+                let hppSum = 0;
+                filtered.forEach(t => {
+                    const match = t.description.match(/Penjualan\s*-\s*(.+?)\s*\((\d+)\s*Pcs\)/i);
+                    if(match) {
+                        const namePart = match[1].trim().toLowerCase(); 
+                        const qty = parseInt(match[2]) || 0;
+                        let matchInv = cacheInventory.find(i => i.item_name.trim().toLowerCase() === namePart);
+                        if(matchInv) hppSum += (qty * parseFloat(matchInv.buy_price || 0));
+                    }
+                });
+                let labaKotor = pendapatan - hppSum;
+                container.innerHTML = `
+                    <div class="bg-gray-50 border p-3 rounded-xl space-y-2 text-xs font-semibold">
+                        <div class="flex justify-between"><span>Total Omset Masuk:</span><span class="text-blue-600">Rp ${pendapatan.toLocaleString('id-ID')}</span></div>
+                        <div class="flex justify-between border-b pb-1"><span>Beban Pokok Modal (HPP):</span><span class="text-amber-600">-Rp ${hppSum.toLocaleString('id-ID')}</span></div>
+                        <div class="flex justify-between pt-2 font-black text-base bg-indigo-50 p-2 rounded text-indigo-950"><span>LABA RELEVAN BERSIH:</span><span class="text-emerald-600">Rp ${labaKotor.toLocaleString('id-ID')}</span></div>
+                    </div>`;
+            }
+            else if (activeSubReport === 'buy') {
+                const buyTxs = filtered.filter(t => t.type === 'OUT' && /Kulakan|Pasokan|Rusak/i.test(t.description));
+                const totalBuy = buyTxs.reduce((a, b) => a + parseFloat(b.amount || 0), 0);
+                container.innerHTML = `
+                    <div class="bg-amber-50 p-3 rounded-xl border border-amber-100 text-amber-900 flex justify-between items-center text-xs">
+                        <div><p class="font-bold text-[10px] uppercase opacity-70">Total Nilai Pembelian/Modal</p><p class="text-lg font-black mt-0.5">Rp ${totalBuy.toLocaleString('id-ID')}</p></div><span class="text-2xl">🧾</span>
+                    </div>
+                    <div class="space-y-1 mt-2">
+                        ${buyTxs.map(t => `<div class="bg-gray-50 p-2 rounded-lg text-[11px] flex justify-between border border-gray-100"><span>${t.description}</span><span class="font-bold text-amber-700">Rp ${parseFloat(t.amount || 0).toLocaleString('id-ID')}</span></div>`).join('') || '<p class="text-gray-400 text-center text-xs py-4">Belum ada catatan pembelian/kulakan pada periode ini.</p>'}
+                    </div>`;
+            }
+            else if (activeSubReport === 'stock') {
+                const totalStockValue = cacheInventory.reduce((a, i) => a + (i.current_stock * parseFloat(i.buy_price || 0)), 0);
+                const totalStockQty = cacheInventory.reduce((a, i) => a + i.current_stock, 0);
+                container.innerHTML = `
+                    <div class="bg-indigo-50 p-3 rounded-xl border border-indigo-100 text-indigo-900 flex justify-between items-center text-xs">
+                        <div><p class="font-bold text-[10px] uppercase opacity-70">Total Nilai Aset Stok (Modal)</p><p class="text-lg font-black mt-0.5">Rp ${totalStockValue.toLocaleString('id-ID')}</p><p class="text-[10px] font-semibold mt-0.5">${totalStockQty} Pcs di gudang</p></div><span class="text-2xl">📦</span>
+                    </div>
+                    <div class="space-y-1 mt-2">
+                        ${cacheInventory.map(i => `<div class="bg-gray-50 p-2 rounded-lg text-[11px] flex justify-between border border-gray-100"><span>${i.item_name} (${i.current_stock} Pcs)</span><span class="font-bold text-indigo-700">Rp ${(i.current_stock * parseFloat(i.buy_price || 0)).toLocaleString('id-ID')}</span></div>`).join('') || '<p class="text-gray-400 text-center text-xs py-4">Belum ada barang di inventory.</p>'}
+                    </div>`;
+            }
+            else if (activeSubReport === 'debts') {
+                const bizDebts = cacheDebts.filter(d => (d.is_private || 0) === 0);
+                const totalPiutang = bizDebts.filter(d => d.type === 'PIUTANG' && d.status === 'BELUM LUNAS').reduce((a, b) => a + parseFloat(b.amount || 0), 0);
+                const totalUtang = bizDebts.filter(d => d.type === 'UTANG' && d.status === 'BELUM LUNAS').reduce((a, b) => a + parseFloat(b.amount || 0), 0);
+                container.innerHTML = `
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div class="bg-blue-50 border border-blue-100 p-2.5 rounded-xl text-blue-900"><p class="font-bold text-[10px] uppercase">Piutang Belum Lunas</p><p class="text-base font-black mt-0.5">Rp ${totalPiutang.toLocaleString('id-ID')}</p></div>
+                        <div class="bg-red-50 border border-red-100 p-2.5 rounded-xl text-red-900"><p class="font-bold text-[10px] uppercase">Utang Belum Lunas</p><p class="text-base font-black mt-0.5">Rp ${totalUtang.toLocaleString('id-ID')}</p></div>
+                    </div>
+                    <div class="space-y-1 mt-2">
+                        ${bizDebts.filter(d => d.status === 'BELUM LUNAS').map(d => `<div class="bg-gray-50 p-2 rounded-lg text-[11px] flex justify-between border border-gray-100"><span>${d.person_name} [${d.type}]</span><span class="font-bold">Rp ${parseFloat(d.amount || 0).toLocaleString('id-ID')}</span></div>`).join('') || '<p class="text-gray-400 text-center text-xs py-4">Tidak ada bon yang belum lunas.</p>'}
+                    </div>`;
+            }
+            else if (activeSubReport === 'opname') {
+                container.innerHTML = `
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-[11px] text-left">
+                            <thead><tr class="text-gray-400 uppercase text-[9px]"><th class="py-1">Barang</th><th class="py-1 text-right">Awal</th><th class="py-1 text-right">Sisa</th><th class="py-1 text-right">Terpakai</th></tr></thead>
+                            <tbody>
+                                ${cacheInventory.map(i => `<tr class="border-t border-gray-100"><td class="py-1.5 font-semibold">${i.item_name}</td><td class="py-1.5 text-right">${i.initial_stock}</td><td class="py-1.5 text-right ${i.current_stock <= 5 ? 'text-red-600 font-bold' : ''}">${i.current_stock}</td><td class="py-1.5 text-right text-gray-500">${i.initial_stock - i.current_stock}</td></tr>`).join('') || `<tr><td colspan="4" class="text-gray-400 text-center py-4">Belum ada barang untuk di-opname.</td></tr>`}
+                            </tbody>
+                        </table>
+                    </div>`;
+            }
+            else { container.innerHTML = `<p class="text-gray-400 text-center text-xs py-4">Data terekap otomatis berskala cloud.</p>`; }
+        }
+
+        function updateCharts(pIn, pOut, prIn, prOut) {
+            try {
+                const canvasShop = document.getElementById('cashflowChart'); 
+                if (canvasShop && currentMode === 'bisnis' && !canvasShop.closest('.hidden')) { 
+                    const ctx = canvasShop.getContext('2d'); 
+                    if (myChart) myChart.destroy(); 
+                    myChart = new Chart(ctx, { type: 'doughnut', data: { labels: ['Masuk', 'Keluar'], datasets: [{ data: [pIn || 1, pOut || 0], backgroundColor: ['#10B981', '#EF4444'] }] }, options: { responsive: true, plugins: { legend: { display: false } } } }); 
+                }
+                const canvasPriv = document.getElementById('privateCashflowChart'); 
+                if (canvasPriv && currentMode === 'pribadi' && !canvasPriv.closest('.hidden')) { 
+                    const ctxPriv = canvasPriv.getContext('2d'); 
+                    if (myPrivateChart) myPrivateChart.destroy(); 
+                    myPrivateChart = new Chart(ctxPriv, { type: 'doughnut', data: { labels: ['Masuk', 'Keluar'], datasets: [{ data: [prIn || 1, prOut || 0], backgroundColor: ['#059669', '#DC2626'] }] }, options: { responsive: true, plugins: { legend: { display: false } } } }); 
+                }
+            } catch(e) { console.error("Gagal memperbarui grafik:", e); }
+        }
+
+        function handleTxTypeChange() { 
+            const box = document.getElementById('allocation-select-box');
+            if(box) box.classList.toggle('hidden', document.getElementById('tx-type').value !== 'OUT'); 
+        }
+        function handlePrivateTxTypeChange() { 
+            const box = document.getElementById('private-allocation-select-box');
+            if(box) box.classList.toggle('hidden', document.getElementById('private-tx-type').value !== 'OUT'); 
+        }
+        function calculateLiveAllocation(isPriv) {
+            const prefix = isPriv === 1 ? 'private-' : ''; const amount = parseFloat(document.getElementById(`${prefix}tx-amount`).value) || 0;
+            const type = document.getElementById(`${prefix}tx-type`).value; const box = document.getElementById(`${prefix}allocation-box`);
+            const rules = activeRules.filter(r => r.is_private === isPriv);
+            if (amount <= 0 || type !== 'IN' || rules.length === 0) { if(box) box.classList.add('hidden'); return; }
+            if(box) box.classList.remove('hidden');
+            const listEl = document.getElementById(`${prefix}live-allocation-list`);
+            if(listEl) listEl.innerHTML = rules.map(r => `<li>• Ke <b>${r.category_name} (${r.percentage}%)</b>: Rp ${Math.round((r.percentage / 100) * amount).toLocaleString('id-ID')}</li>`).join('');
+        }
+        function toggleCustomDate(isPriv) { document.getElementById(isPriv === 1 ? 'custom-date-box-priv' : 'custom-date-box-shop').classList.toggle('hidden'); }
+        function applyCustomFilter(isPriv) {
+            if(isPriv === 0) { filterStartShop = document.getElementById('filter-start-date-shop').value; filterEndShop = document.getElementById('filter-end-date-shop').value; }
+            else { filterStartPriv = document.getElementById('filter-start-date-priv').value; filterEndPriv = document.getElementById('filter-end-date-priv').value; }
+            renderTransactions();
+        }
+        function setFilterTime(type, isPriv) {
+            const today = new Date(); const formatDate = (d) => d.toISOString().split('T')[0];
+            let start = '', end = '';
+            if (type === 'kemarin') { const y = new Date(); y.setDate(today.getDate() - 1); start = formatDate(y); end = formatDate(y); }
+            else if (type === '7hari') { const p7 = new Date(); p7.setDate(today.getDate() - 7); start = formatDate(p7); end = formatDate(today); }
+            
+            if(isPriv === 0) { filterStartShop = start; filterEndShop = end; document.getElementById('custom-date-box-shop').classList.add('hidden'); } 
+            else { filterStartPriv = start; filterEndPriv = end; document.getElementById('custom-date-box-priv').classList.add('hidden'); }
+            
+            const prefix = isPriv === 0 ? 'shop' : 'priv';
+            ['all', 'kemarin', '7hari'].forEach(b => {
+                const btn = document.getElementById(`btn-f-${prefix}-${b}`);
+                if(btn) {
+                    if(b === type) {
+                        btn.className = isPriv === 0 ? "bg-indigo-600 text-white px-2.5 py-1 rounded-lg font-bold shrink-0" : "bg-emerald-600 text-white px-2.5 py-1 rounded-lg font-bold shrink-0";
+                    } else {
+                        btn.className = "bg-gray-200 text-gray-600 px-2.5 py-1 rounded-lg font-semibold shrink-0";
+                    }
+                }
+            });
+            renderTransactions();
+        }
+
+        // --- SERVICE WORKER PWA ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const b = new Blob([`
+                    const CACHE_NAME = 'tokokelontong-v1';
+                    self.addEventListener('install', e => self.skipWaiting());
+                    self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
+                `], { type: 'application/javascript' });
+                const u = URL.createObjectURL(b);
+                navigator.serviceWorker.register(u).then(() => console.log('PWA Service Worker Aktif!')).catch(e => console.log('Gagal:', e));
+            });
+        }
+    </script>
+</body>
+</html>
