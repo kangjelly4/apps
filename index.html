@@ -274,7 +274,7 @@
                                 <div id="private-allocation-select-box" class="hidden">
                                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Pilih Pos Anggaran:</label>
                                     <select id="private-tx-allocation-selector" class="w-full p-2.5 text-sm border rounded-xl bg-emerald-50 font-bold text-emerald-800 border-emerald-100">
-                                        <option value="Umum">Umum / Tanpa Pos</option>
+                                        <option value="Umum">Umum / Tan Pos</option>
                                     </select>
                                 </div>
                             </div>
@@ -427,7 +427,6 @@
             switchMobilePage('home', navBox.querySelector('.class-nav-btn'));
         }
 
-        UX-MOBILE-PAGE-LOAD
         function switchMobilePage(pageId, btnElement) {
             document.querySelectorAll('.class-page-box').forEach(p => p.classList.add('hidden'));
             const suffix = currentMode === 'bisnis' ? '-biz' : '-priv';
@@ -821,7 +820,7 @@
             } catch (error) {
                 console.error("Error Simpan Transaksi:", error);
                 alert("Gagal menyimpan: " + error.message);
-            } finally { // PERBAIKAN: Mengganti kata typo 'fillallback' menjadi 'finally'
+            } finally { 
                 if (btnEl) { 
                     btnEl.dataset.busy = '0'; 
                     btnEl.disabled = false; 
