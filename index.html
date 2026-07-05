@@ -51,7 +51,7 @@
         <!-- HEADER DENGAN USER DISPLAY & TOGGLE MODE -->
         <div class="flex flex-col sm:flex-row justify-between items-center gap-3 mb-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mt-2">
             <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
-                <h1 class="text-xl font-black text-indigo-600 tracking-tight transition-all" id="app-title-display">🏪 TokoKelontong Pro</h1>
+                <h1 class="text-xl font-black text-indigo-600 tracking-tight transition-all" id="app-title-display">🏪 Finance Pro</h1>
                 <span id="user-display-name" class="bg-indigo-100 text-indigo-800 text-[11px] font-bold px-2.5 py-1 rounded-full">-</span>
             </div>
             
@@ -402,7 +402,7 @@
             const navBox = document.getElementById('app-navigation-bar');
 
             if(mode === 'bisnis') {
-                appTitle.innerText = "🏪 TokoKelontong Pro";
+                appTitle.innerText = "🏪 Finance Pro";
                 appTitle.className = "text-xl font-black text-indigo-600 tracking-tight";
                 btnBiz.className = "px-3 py-1.5 rounded-lg bg-indigo-600 text-white shadow-sm";
                 btnPriv.className = "px-3 py-1.5 rounded-lg text-gray-500 hover:bg-gray-200";
@@ -1097,7 +1097,7 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 const b = new Blob([`
-                    const CACHE_NAME = 'tokokelontong-v1';
+                    const CACHE_NAME = 'finance-v1';
                     self.addEventListener('install', e => self.skipWaiting());
                     self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
                 `], { type: 'application/javascript' });
