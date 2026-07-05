@@ -1,6 +1,6 @@
 {
-  "name": "TokoKelontong Pro",
-  "short_name": "TokoKelontong",
+  "name": "Finance Pro",
+  "short_name": "Finance",
   "start_url": "pro_6.html",
   "display": "standalone",
   "background_color": "#4f46e5",
@@ -8,7 +8,7 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3081/3081918.png",
+      "src": "<path d="M 60 130 C 80 120, 100 70, 135 60" fill="none" stroke="#fbbf24" stroke-width="6" stroke-linecap="round" />",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
