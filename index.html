@@ -274,7 +274,7 @@
                                 <div id="private-allocation-select-box" class="hidden">
                                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Pilih Pos Anggaran:</label>
                                     <select id="private-tx-allocation-selector" class="w-full p-2.5 text-sm border rounded-xl bg-emerald-50 font-bold text-emerald-800 border-emerald-100">
-                                        <option value="Umum">Umum / Tan Pos</option>
+                                        <option value="Umum">Umum / Tanpa Pos</option>
                                     </select>
                                 </div>
                             </div>
@@ -670,9 +670,24 @@
             const targetList = filterDataByDate(filtered, currentMode === 'bisnis' ? filterStartShop : filterStartPriv, currentMode === 'bisnis' ? filterEndShop : filterEndPriv);
             let totalIn = 0, totalOut = 0;
             
+            // --- PERBAIKAN LOGIKA DASBOR DI SINI ---
+            let totalPenjualanBarang = 0;
+
             if(currentMode === 'bisnis') {
                 totalIncomeShop = 0; shopAllocationMap = {};
-                targetList.forEach(t => { if(t.type === 'IN') { totalIncomeShop += parseFloat(t.amount || 0); totalIn += parseFloat(t.amount || 0); } else { totalOut += parseFloat(t.amount || 0); } });
+                targetList.forEach(t => { 
+                    if(t.type === 'IN') { 
+                        totalIncomeShop += parseFloat(t.amount || 0); 
+                        totalIn += parseFloat(t.amount || 0); 
+                        
+                        // Hanya hitung jika pemasukan memiliki kata "Penjualan" di keterangannya
+                        if (t.description && t.description.includes("Penjualan")) {
+                            totalPenjualanBarang += parseFloat(t.amount || 0);
+                        }
+                    } else { 
+                        totalOut += parseFloat(t.amount || 0); 
+                    } 
+                });
                 targetList.forEach(t => { if(t.type === 'OUT' && t.category_allocation !== 'Umum') shopAllocationMap[t.category_allocation] = (shopAllocationMap[t.category_allocation] || 0) + parseFloat(t.amount || 0); });
             } else {
                 totalIncomePriv = 0; privAllocationMap = {};
@@ -692,10 +707,19 @@
                 }).join('') || '<p class="text-gray-400 text-center text-xs py-4">Belum ada riwayat transaksi.</p>';
             }
 
+            // --- RE-INKORPORASI DISPLAY OUTPUT DASBOR ---
             const perfText = document.getElementById('perf-text-smart');
             if (currentMode === 'bisnis') {
-                document.getElementById('dash-sales').innerText = "Rp " + totalIn.toLocaleString('id-ID');
-                document.getElementById('dash-profit').innerText = "Rp " + (totalIn - totalOut).toLocaleString('id-ID');
+                // Tarik total HPP terhitung dari elemen visual
+                let currentHppText = document.getElementById('dash-hpp').innerText || "Rp 0";
+                let currentHppVal = parseFloat(currentHppText.replace(/[^0-9]/g, '')) || 0;
+
+                // Tampilkan total nilai penjualan barang asli
+                document.getElementById('dash-sales').innerText = "Rp " + totalPenjualanBarang.toLocaleString('id-ID');
+                
+                // Laba Bersih = Total Omset Penjualan Barang - Total HPP Barang Terjual
+                document.getElementById('dash-profit').innerText = "Rp " + (totalPenjualanBarang - currentHppVal).toLocaleString('id-ID');
+                
                 if(perfText) perfText.innerText = totalIn > totalOut ? "📈 Performa Surplus! Laba kas masuk toko berjalan lebih tinggi dibanding pengeluaran." : "🚨 Defisit Toko! Pengeluaran belanja modal melampaui omset harian.";
             } else {
                 if(perfText) perfText.innerText = totalIn >= totalOut ? "🟢 Keuangan pribadi aman dan terkendali." : "⚠️ Pengeluaran pribadi bulanan Anda terpantau membengkak.";
@@ -820,7 +844,7 @@
             } catch (error) {
                 console.error("Error Simpan Transaksi:", error);
                 alert("Gagal menyimpan: " + error.message);
-            } finally { 
+            } finally {
                 if (btnEl) { 
                     btnEl.dataset.busy = '0'; 
                     btnEl.disabled = false; 
