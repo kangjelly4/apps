@@ -8,7 +8,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="manifest" href="manifest.json">
     
-    <!-- SDK Firebase Compat Resmi -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -36,19 +35,16 @@
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans pb-24 md:pb-6 relative">
 
-    <!-- BARIS KHUSUS WATERMARK PALING ATAS -->
     <div class="w-full bg-gradient-to-r from-red-600 via-indigo-700 to-red-600 text-white text-center py-2 px-4 text-xs font-black tracking-widest uppercase shadow-md sticky top-0 z-50 select-none border-b-2 border-amber-400">
         🔒 APP LISENSI PERMANEN: KANG JELL (WA: 083814559667 • IG: @kang.jell • TT: @kang.jell) 🔒
     </div>
 
-    <!-- ELEMEN WATERMARK BACKEND -->
     <div id="app-watermark-bg" class="system-watermark">
         kang.jell • 083814559667<br>PRO FINANCE SYSTEM
     </div>
 
     <div class="max-w-6xl mx-auto p-3 sm:p-5 relative z-10">
         
-        <!-- HEADER DENGAN USER DISPLAY & TOGGLE MODE -->
         <div class="flex flex-col sm:flex-row justify-between items-center gap-3 mb-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mt-2">
             <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
                 <h1 class="text-xl font-black text-indigo-600 tracking-tight transition-all" id="app-title-display">🏪 Finance Pro</h1>
@@ -64,7 +60,6 @@
             </div>
         </div>
 
-        <!-- AUTH BOX -->
         <div id="auth-section" class="max-w-md mx-auto bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mt-10">
             <h2 class="text-lg font-bold mb-4 text-gray-700" id="auth-title">Masuk Aplikasi</h2>
             <div class="space-y-3">
@@ -76,22 +71,17 @@
             </div>
         </div>
 
-        <!-- MAIN APP DASHBOARD -->
         <div id="main-dashboard" class="hidden space-y-4">
 
-            <!-- EVALUASI BULANAN -->
             <div class="bg-indigo-50 border border-indigo-100 p-3.5 rounded-2xl text-xs space-y-2">
                 <p class="font-bold text-indigo-900 uppercase text-[10px]">📊 Evaluasi Performa Keuangan Anda:</p>
                 <p class="font-medium text-indigo-950" id="perf-text-smart">Memuat analisis...</p>
             </div>
 
-            <!-- TAMPILAN UTAMA BERDASARKAN SEKTOR MODAL AKTIF -->
             <div class="w-full space-y-4">
                 
-                <!-- ==================== AREA SEKTOR BISNIS ==================== -->
                 <div id="sector-bisnis" class="space-y-4">
                     
-                    <!-- BERANDA TOKO -->
                     <div id="page-home-biz" class="space-y-4 class-page-box">
                         <div class="grid grid-cols-3 gap-2 text-center">
                             <div class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
@@ -125,7 +115,6 @@
                         </div>
                     </div>
 
-                    <!-- CATAT KAS TOKO -->
                     <div id="page-transaction-biz" class="hidden space-y-4 class-page-box">
                         <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
                             <h3 class="font-bold text-sm text-gray-700">📝 Input Pembukuan Toko</h3>
@@ -161,9 +150,11 @@
                         <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-2">
                             <h3 class="font-bold text-sm text-gray-700">📑 Log Riwayat Catatan Toko</h3>
                             <div class="flex gap-1 overflow-x-auto py-1 text-[10px]">
-                                <button onclick="setFilterTime('all', 0)" class="bg-indigo-600 text-white px-2.5 py-1 rounded-lg font-bold shrink-0" id="btn-f-shop-all">Semua</button>
+                                <button onclick="setFilterTime('hari_ini', 0)" class="bg-indigo-600 text-white px-2.5 py-1 rounded-lg font-bold shrink-0" id="btn-f-shop-hari_ini">Hari Ini</button>
                                 <button onclick="setFilterTime('kemarin', 0)" class="bg-gray-200 text-gray-600 px-2.5 py-1 rounded-lg font-semibold shrink-0" id="btn-f-shop-kemarin">Kemarin</button>
-                                <button onclick="setFilterTime('7hari', 0)" class="bg-gray-200 text-gray-600 px-2.5 py-1 rounded-lg font-semibold shrink-0" id="btn-f-shop-7hari">7 Hari</button>
+                                <button onclick="setFilterTime('7hari', 0)" class="bg-gray-200 text-gray-600 px-2.5 py-1 rounded-lg font-semibold shrink-0" id="btn-f-shop-7hari">7 Hari Terakhir</button>
+                                <button onclick="setFilterTime('30hari', 0)" class="bg-gray-200 text-gray-600 px-2.5 py-1 rounded-lg font-semibold shrink-0" id="btn-f-shop-30hari">30 Hari Terakhir</button>
+                                <button onclick="setFilterTime('all', 0)" class="bg-gray-200 text-gray-600 px-2.5 py-1 rounded-lg font-semibold shrink-0" id="btn-f-shop-all">Semua</button>
                                 <button onclick="toggleCustomDate(0)" class="bg-gray-200 text-gray-600 px-2.5 py-1 rounded-lg font-semibold shrink-0" id="btn-f-shop-custom">Custom</button>
                             </div>
                             <div id="custom-date-box-shop" class="hidden flex items-center gap-2 text-xs bg-gray-50 p-2 rounded-xl">
@@ -177,15 +168,22 @@
                         </div>
                     </div>
 
-                    <!-- STOK INVENTORY -->
                     <div id="page-inventory-biz" class="hidden space-y-4 class-page-box">
                         <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
-                            <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-gray-700">📦 Stok Inventory Sembako</h3><button onclick="addNewInventoryItem()" class="text-xs bg-indigo-600 text-white px-2.5 py-1 rounded-xl font-bold">+ Barang</button></div>
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                                <h3 class="font-bold text-sm text-gray-700">📦 Stok Inventory Sembako</h3>
+                                <button onclick="addNewInventoryItem()" class="text-xs bg-indigo-600 text-white px-2.5 py-1 rounded-xl font-bold shadow-sm self-end sm:self-auto">+ Barang Baru</button>
+                            </div>
+                            
+                            <div class="relative w-full">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">🔍</span>
+                                <input type="text" id="search-inventory" oninput="renderInventory()" placeholder="Cari nama sembako/produk..." class="w-full pl-9 pr-4 py-2 text-xs border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-1 focus:ring-indigo-500 text-gray-800 placeholder-gray-400">
+                            </div>
+
                             <div id="inventory-list-display" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
                         </div>
                     </div>
 
-                    <!-- UTANG & RENCANA TOKO -->
                     <div id="page-debts-biz" class="hidden space-y-4 class-page-box">
                         <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
                             <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-gray-700">📌 Buku Kas Bon Pelanggan & Sales</h3><button onclick="addNewDebt(0)" class="text-xs bg-red-100 text-red-600 px-2.5 py-1 rounded-xl font-bold">+ Bon</button></div>
@@ -197,7 +195,6 @@
                         </div>
                     </div>
 
-                    <!-- PUSAT MENU LAPORAN -->
                     <div id="page-report-biz" class="hidden space-y-4 class-page-box">
                         <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4">
                             <h3 class="font-black text-base text-indigo-700 flex items-center gap-2">📊 Pusat Laporan Analisis Toko</h3>
@@ -236,10 +233,8 @@
 
                 </div>
 
-                <!-- ==================== AREA SEKTOR PRIBADI ==================== -->
                 <div id="sector-pribadi" class="hidden space-y-4">
                     
-                    <!-- BERANDA PRIBADI -->
                     <div id="page-home-priv" class="space-y-4 class-page-box">
                         <div class="bg-gradient-to-br from-emerald-600 to-teal-800 p-5 rounded-2xl text-white shadow-sm">
                             <p class="text-[10px] uppercase tracking-widest opacity-75 font-bold">Total Saldo Uang Pribadi</p>
@@ -257,7 +252,6 @@
                         </div>
                     </div>
 
-                    <!-- CATAT KAS PRIBADI -->
                     <div id="page-transaction-priv" class="hidden space-y-4 class-page-box">
                         <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
                             <h3 class="font-bold text-sm text-emerald-700 flex items-center gap-1">💸 Catat Kas Anggaran Pribadi</h3>
@@ -293,9 +287,11 @@
                         <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-2">
                             <h3 class="font-bold text-sm text-gray-700">📑 Log Riwayat Transaksi Pribadi</h3>
                             <div class="flex gap-1 overflow-x-auto py-1 text-[10px]">
-                                <button onclick="setFilterTime('all', 1)" class="bg-emerald-600 text-white px-2.5 py-1 rounded-lg font-bold shrink-0" id="btn-f-priv-all">Semua</button>
+                                <button onclick="setFilterTime('hari_ini', 1)" class="bg-emerald-600 text-white px-2.5 py-1 rounded-lg font-bold shrink-0" id="btn-f-priv-hari_ini">Hari Ini</button>
                                 <button onclick="setFilterTime('kemarin', 1)" class="bg-gray-200 text-gray-600 px-2.5 py-1 rounded-lg font-semibold shrink-0" id="btn-f-priv-kemarin">Kemarin</button>
-                                <button onclick="setFilterTime('7hari', 1)" class="bg-gray-200 text-gray-600 px-2.5 py-1 rounded-lg font-semibold shrink-0" id="btn-f-priv-7hari">7 Hari</button>
+                                <button onclick="setFilterTime('7hari', 1)" class="bg-gray-200 text-gray-600 px-2.5 py-1 rounded-lg font-semibold shrink-0" id="btn-f-priv-7hari">7 Hari Terakhir</button>
+                                <button onclick="setFilterTime('30hari', 1)" class="bg-gray-200 text-gray-600 px-2.5 py-1 rounded-lg font-semibold shrink-0" id="btn-f-priv-30hari">30 Hari Terakhir</button>
+                                <button onclick="setFilterTime('all', 1)" class="bg-gray-200 text-gray-600 px-2.5 py-1 rounded-lg font-semibold shrink-0" id="btn-f-priv-all">Semua</button>
                                 <button onclick="toggleCustomDate(1)" class="bg-gray-200 text-gray-600 px-2.5 py-1 rounded-lg font-semibold shrink-0" id="btn-f-priv-custom">Custom</button>
                             </div>
                             <div id="custom-date-box-priv" class="hidden flex items-center gap-2 text-xs bg-gray-50 p-2 rounded-xl">
@@ -309,7 +305,6 @@
                         </div>
                     </div>
 
-                    <!-- UTANG & RENCANA PRIBADI -->
                     <div id="page-debts-priv" class="hidden space-y-4 class-page-box">
                         <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
                             <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-gray-700">📌 Buku Kas Bon Mandiri</h3><button onclick="addNewDebt(1)" class="text-xs bg-red-100 text-red-600 px-2.5 py-1 rounded-xl font-bold">+ Bon</button></div>
@@ -323,7 +318,6 @@
                 </div>
             </div>
 
-            <!-- TAB NAVIGASI BAWAH HP -->
             <div id="app-navigation-bar" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-xl py-2 px-3 flex justify-around items-center max-w-md mx-auto z-50 rounded-t-3xl text-[9px] font-bold sm:max-w-xl md:max-w-none md:relative md:rounded-3xl md:mt-6"></div>
 
         </div>
@@ -348,7 +342,12 @@
 
         let currentUser = null;
         let allWallets = [], activeRules = [], myChart = null, myPrivateChart = null;
-        let filterStartShop = '', filterEndShop = '', filterStartPriv = '', filterEndPriv = '';
+        
+        // KUNCI AWAL: LOG PERTAMA KALI DIBUKA OTOMATIS FILTER HARI INI
+        const todayStr = new Date().toISOString().split('T')[0];
+        let filterStartShop = todayStr, filterEndShop = todayStr;
+        let filterStartPriv = todayStr, filterEndPriv = todayStr;
+        
         let totalIncomeShop = 0, totalIncomePriv = 0, shopAllocationMap = {}, privAllocationMap = {};
         let cacheGlobalTransactions = [], cacheInventory = [], cacheDebts = [], cacheGoals = [];
         let activeSubReport = 'sales'; let reportFilterStart = '', reportFilterEnd = '';
@@ -590,41 +589,66 @@
         }
 
         function renderInventory() {
-            let totalBuyPriceSum = 0; let totalSoldQty = 0;
             const displayEl = document.getElementById('inventory-list-display');
             if(!displayEl) return;
             
-            displayEl.innerHTML = cacheInventory.map(i => {
-                const profitPerItem = parseFloat(i.sell_price || 0) - parseFloat(i.buy_price || 0); const isStockLow = i.current_stock <= 5;
-                const soldQty = i.initial_stock - i.current_stock;
-                if (soldQty > 0) { totalBuyPriceSum += (soldQty * parseFloat(i.buy_price || 0)); totalSoldQty += soldQty; }
+            const searchKeyword = document.getElementById('search-inventory')?.value.toLowerCase() || '';
+            const filteredInventory = cacheInventory.filter(i => i.item_name.toLowerCase().includes(searchKeyword));
+            
+            displayEl.innerHTML = filteredInventory.map(i => {
+                const profitPerItem = parseFloat(i.sell_price || 0) - parseFloat(i.buy_price || 0); 
+                const isStockLow = i.current_stock <= 5;
                 return `
-                    <div class="border p-3 rounded-2xl flex flex-col gap-2 text-xs bg-white border-gray-200 relative overflow-hidden">
+                    <div class="border p-3 rounded-2xl flex flex-col gap-2 text-xs bg-white border-gray-200 relative overflow-hidden shadow-sm">
                         ${isStockLow ? `<div class="absolute top-0 right-0 bg-red-600 text-white font-black px-3 py-0.5 rounded-bl-xl text-[9px]">🚨 STOK MINIM</div>` : ''}
-                        <div class="font-black text-sm text-gray-800">🛒 ${i.item_name}</div>
+                        
+                        <div class="flex justify-between items-start gap-2">
+                            <div class="font-black text-sm text-gray-800 break-all pr-2">🛒 ${i.item_name}</div>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <button onclick="editInventoryItem('${i.firestoreId}', '${i.item_name}', ${i.buy_price}, ${i.sell_price})" class="text-[10px] bg-gray-100 hover:bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-md font-bold border border-gray-200 transition-colors">⚙️ Edit</button>
+                                <button onclick="deleteInventoryItem('${i.firestoreId}')" class="text-gray-300 hover:text-red-500 font-bold px-1 text-sm transition-colors">✖</button>
+                            </div>
+                        </div>
+
                         <div class="grid grid-cols-3 gap-1 bg-gray-50 p-2 rounded-xl border border-gray-100 font-medium text-gray-600 text-[10px]">
                             <div>Beli: <span class="block font-bold text-gray-900">Rp ${parseFloat(i.buy_price || 0).toLocaleString('id-ID')}</span></div>
                             <div>Jual: <span class="block font-bold text-gray-900">Rp ${parseFloat(i.sell_price || 0).toLocaleString('id-ID')}</span></div>
                             <div>Profit: <span class="block font-bold text-emerald-600">+Rp ${profitPerItem.toLocaleString('id-ID')}</span></div>
                         </div>
-                        <div class="flex justify-between items-center pt-1">
+                        <div class="flex justify-between items-center pt-1 mt-auto">
                             <div class="text-[10px] text-gray-500 font-semibold">Awal: ${i.initial_stock} | Sisa: <span class="font-black ${isStockLow?'text-red-600':'text-indigo-600'}">${i.current_stock} Pcs</span></div>
                             <div class="flex gap-1">
-                                <button onclick="adjustStock('${i.firestoreId}', ${i.current_stock}, 1, '${i.item_name}', ${i.buy_price}, ${i.sell_price})" class="bg-green-600 text-white font-bold px-2 py-1 rounded-lg text-[9px]">+ Pasokan</button>
-                                <button onclick="adjustStock('${i.firestoreId}', ${i.current_stock}, -1, '${i.item_name}', ${i.buy_price}, ${i.sell_price})" class="bg-amber-500 text-white font-bold px-2 py-1 rounded-lg text-[9px]">- Keluar</button>
-                                <button onclick="deleteInventoryItem('${i.firestoreId}')" class="text-gray-300 font-bold px-1 text-xs">✖</button>
+                                <button onclick="adjustStock('${i.firestoreId}', ${i.current_stock}, 1, '${i.item_name}', ${i.buy_price}, ${i.sell_price})" class="bg-green-600 text-white font-bold px-2 py-1 rounded-lg text-[9px] shadow-sm">+ Pasokan</button>
+                                <button onclick="adjustStock('${i.firestoreId}', ${i.current_stock}, -1, '${i.item_name}', ${i.buy_price}, ${i.sell_price})" class="bg-amber-500 text-white font-bold px-2 py-1 rounded-lg text-[9px] shadow-sm">- Jual/Keluar</button>
                             </div>
                         </div>
                     </div>`;
-            }).join('') || '<p class="text-gray-400 text-center text-xs py-4 col-span-full">Gudang kosong.</p>';
-            
-            document.getElementById('dash-hpp').innerText = "Rp " + totalBuyPriceSum.toLocaleString('id-ID');
-            document.getElementById('dash-sales-qty').innerText = totalSoldQty + " Pcs Terjual";
+            }).join('') || '<p class="text-gray-400 text-center text-xs py-6 col-span-full">Produk tidak ditemukan atau gudang kosong.</p>';
+        }
+
+        async function editInventoryItem(docId, oldName, oldBuy, oldSell) {
+            const newName = prompt("Ubah Nama Barang Sembako:", oldName);
+            if (!newName) return;
+            const newBuyStr = prompt("Ubah Harga Beli Modal (HPP) (Rp):", oldBuy);
+            if (!newBuyStr) return;
+            const newSellStr = prompt("Ubah Harga Jual Toko (Rp):", oldSell);
+            if (!newSellStr) return;
+
+            try {
+                await db.collection('inventory').doc(docId).update({
+                    item_name: newName,
+                    buy_price: parseFloat(newBuyStr),
+                    sell_price: parseFloat(newSellStr)
+                });
+                alert("🎉 Data barang berhasil diperbarui!");
+            } catch (error) {
+                alert("Gagal merubah data barang: " + error.message);
+            }
         }
 
         async function adjustStock(docId, currentStock, modifier, itemName, buyPrice, sellPrice) {
-            let qtyChange = parseInt(prompt("Masukkan jumlah kuantitas:")); if (!qtyChange || qtyChange <= 0) return;
-            let newStock = currentStock + (modifier * qtyChange); if (newStock < 0) return alert("Stok tidak mencukupi!");
+            let qtyChange = parseInt(prompt("Masukkan jumlah kuantitas produk:")); if (!qtyChange || qtyChange <= 0) return;
+            let newStock = currentStock + (modifier * qtyChange); if (newStock < 0) return alert("Stok di gudang tidak mencukupi!");
 
             let reason = ""; let txType = ""; let finalAmount = 0;
             if (modifier > 0) {
@@ -634,7 +658,11 @@
                 else { reason = "Pasokan Lainnya"; }
             } else {
                 let opt = prompt("Pilih Alasan Stok Keluar:\n1. Penjualan Barang\n2. Barang Rusak / Kadaluarsa\n3. Pemakaian Pribadi (Owner)", "1");
-                if (opt === "1") { reason = "Penjualan"; txType = "IN"; finalAmount = parseFloat(sellPrice || 0) * qtyChange; }
+                if (opt === "1") { 
+                    reason = "Penjualan"; 
+                    txType = "IN"; 
+                    finalAmount = parseFloat(sellPrice || 0) * qtyChange; 
+                }
                 else if (opt === "2") { reason = "Barang Rusak"; txType = "OUT"; finalAmount = parseFloat(buyPrice || 0) * qtyChange; }
                 else { reason = "Pemakaian Pribadi"; }
             }
@@ -642,8 +670,9 @@
             let walletId = null;
             if (txType !== "") {
                 const bWallets = allWallets.filter(w => w.is_private === 0);
-                if (bWallets.length === 0) return alert("Buat akun laci kas toko dulu!");
+                if (bWallets.length === 0) return alert("Buat akun laci kas dompet toko dulu di Beranda!");
                 walletId = bWallets[0].firestoreId;
+                
                 const updatedBalance = parseFloat(bWallets[0].balance || 0) + (txType === 'IN' ? finalAmount : -finalAmount);
                 await db.collection('wallets').doc(walletId).update({ balance: updatedBalance });
             }
@@ -653,11 +682,12 @@
             const desc = modifier < 0 && reason === "Penjualan" ? `Penjualan - ${itemName} (${qtyChange} Pcs)` : `[Stok] ${reason} - ${itemName} (${qtyChange} Pcs) Mdl:Rp ${buyPrice}`;
 
             await db.collection('inventory').doc(docId).update({ current_stock: newStock });
-            if (txType !== "" || reason === "Pemakaian Pribadi" || reason === "Hasil Production") {
+            if (txType !== "" || reason === "Pemakaian Pribadi" || reason === "Hasil Produksi") {
                 await db.collection('transactions').add({ user_id: currentUser.uid, wallet_id: walletId || '', amount: finalAmount, type: txType || 'OUT', description: desc, is_private: 0, category_allocation: 'Umum', created_at: now });
             }
         }
 
+        // ==================== REPARASI TOTAL LOGIKA PERHITUNGAN TRANSAKSI, SALES & HPP SINKRON ====================
         function renderTransactions() {
             const isPrivFlag = currentMode === 'pribadi' ? 1 : 0;
             const filtered = cacheGlobalTransactions.filter(t => t.is_private === isPrivFlag);
@@ -668,30 +698,52 @@
             };
 
             const targetList = filterDataByDate(filtered, currentMode === 'bisnis' ? filterStartShop : filterStartPriv, currentMode === 'bisnis' ? filterEndShop : filterEndPriv);
-            let totalIn = 0, totalOut = 0;
             
-            // --- PERBAIKAN LOGIKA DASBOR DI SINI ---
-            let totalPenjualanBarang = 0;
+            let localTotalIn = 0;
+            let localTotalOut = 0;
+            let localTotalSales = 0;
+            let localTotalHppCalculated = 0; // HPP Dinamis ikut rentang filter log riwayat aktif
+            let localSoldQty = 0;
 
             if(currentMode === 'bisnis') {
-                totalIncomeShop = 0; shopAllocationMap = {};
+                totalIncomeShop = 0; 
+                shopAllocationMap = {};
+                
                 targetList.forEach(t => { 
                     if(t.type === 'IN') { 
+                        localTotalIn += parseFloat(t.amount || 0); 
                         totalIncomeShop += parseFloat(t.amount || 0); 
-                        totalIn += parseFloat(t.amount || 0); 
-                        
-                        // Hanya hitung jika pemasukan memiliki kata "Penjualan" di keterangannya
                         if (t.description && t.description.includes("Penjualan")) {
-                            totalPenjualanBarang += parseFloat(t.amount || 0);
+                            localTotalSales += parseFloat(t.amount || 0);
+                            
+                            // Ekstrak kuantitas item terjual untuk menghitung HPP dinamis secara real-time
+                            const match = t.description.match(/Penjualan\s*-\s*(.+?)\s*\((\d+)\s*Pcs\)/i);
+                            if(match) {
+                                const namePart = match[1].trim().toLowerCase(); 
+                                const qty = parseInt(match[2]) || 0;
+                                localSoldQty += qty;
+                                let matchInv = cacheInventory.find(i => i.item_name.trim().toLowerCase() === namePart);
+                                if(matchInv) {
+                                    localTotalHppCalculated += (qty * parseFloat(matchInv.buy_price || 0));
+                                }
+                            }
                         }
                     } else { 
-                        totalOut += parseFloat(t.amount || 0); 
+                        localTotalOut += parseFloat(t.amount || 0); 
                     } 
                 });
                 targetList.forEach(t => { if(t.type === 'OUT' && t.category_allocation !== 'Umum') shopAllocationMap[t.category_allocation] = (shopAllocationMap[t.category_allocation] || 0) + parseFloat(t.amount || 0); });
             } else {
-                totalIncomePriv = 0; privAllocationMap = {};
-                targetList.forEach(t => { if(t.type === 'IN') { totalIncomePriv += parseFloat(t.amount || 0); totalIn += parseFloat(t.amount || 0); } else { totalOut += parseFloat(t.amount || 0); } });
+                totalIncomePriv = 0;
+                privAllocationMap = {};
+                targetList.forEach(t => { 
+                    if(t.type === 'IN') { 
+                        totalIncomePriv += parseFloat(t.amount || 0); 
+                        localTotalIn += parseFloat(t.amount || 0); 
+                    } else { 
+                        localTotalOut += parseFloat(t.amount || 0); 
+                    } 
+                });
                 targetList.forEach(t => { if(t.type === 'OUT' && t.category_allocation !== 'Umum') privAllocationMap[t.category_allocation] = (privAllocationMap[t.category_allocation] || 0) + parseFloat(t.amount || 0); });
             }
 
@@ -704,30 +756,26 @@
                             <div><p class="font-bold text-gray-800">${t.description}</p><p class="text-[9px] text-gray-400 font-mono">${dateParts[2] || '00'}/${dateParts[1] || '00'} ${parts[1]?.slice(0,5) || ''} ${t.type === 'OUT' ? `• Pos: ${t.category_allocation}` : ''}</p></div>
                             <div class="text-right flex items-center gap-2"><span class="font-black ${t.type==='IN'?'text-green-600':'text-red-600'}">${t.type==='IN'?'+':'-'} Rp ${parseFloat(t.amount || 0).toLocaleString('id-ID')}</span><button onclick="deleteTransaction('${t.firestoreId}')" class="text-red-400 text-sm">✖</button></div>
                         </div>`;
-                }).join('') || '<p class="text-gray-400 text-center text-xs py-4">Belum ada riwayat transaksi.</p>';
+                }).join('') || '<p class="text-gray-400 text-center text-xs py-4">Belum ada riwayat transaksi pada periode filter ini.</p>';
             }
 
-            // --- RE-INKORPORASI DISPLAY OUTPUT DASBOR ---
             const perfText = document.getElementById('perf-text-smart');
             if (currentMode === 'bisnis') {
-                // Tarik total HPP terhitung dari elemen visual
-                let currentHppText = document.getElementById('dash-hpp').innerText || "Rp 0";
-                let currentHppVal = parseFloat(currentHppText.replace(/[^0-9]/g, '')) || 0;
-
-                // Tampilkan total nilai penjualan barang asli
-                document.getElementById('dash-sales').innerText = "Rp " + totalPenjualanBarang.toLocaleString('id-ID');
+                // SINKRONISASI VISUAL: Tampilan Dasbor Beranda mengikuti Filter log riwayat aktif
+                document.getElementById('dash-sales').innerText = "Rp " + localTotalSales.toLocaleString('id-ID');
+                document.getElementById('dash-hpp').innerText = "Rp " + localTotalHppCalculated.toLocaleString('id-ID');
+                document.getElementById('dash-sales-qty').innerText = localSoldQty + " Pcs Terjual";
+                document.getElementById('dash-profit').innerText = "Rp " + (localTotalSales - localTotalHppCalculated).toLocaleString('id-ID');
                 
-                // Laba Bersih = Total Omset Penjualan Barang - Total HPP Barang Terjual
-                document.getElementById('dash-profit').innerText = "Rp " + (totalPenjualanBarang - currentHppVal).toLocaleString('id-ID');
-                
-                if(perfText) perfText.innerText = totalIn > totalOut ? "📈 Performa Surplus! Laba kas masuk toko berjalan lebih tinggi dibanding pengeluaran." : "🚨 Defisit Toko! Pengeluaran belanja modal melampaui omset harian.";
+                if(perfText) perfText.innerText = localTotalIn > localTotalOut ? "📈 Performa Surplus! Laba kas masuk toko berjalan lebih tinggi dibanding pengeluaran." : "🚨 Defisit Toko! Pengeluaran belanja modal melampaui omset harian.";
             } else {
-                if(perfText) perfText.innerText = totalIn >= totalOut ? "🟢 Keuangan pribadi aman dan terkendali." : "⚠️ Pengeluaran pribadi bulanan Anda terpantau membengkak.";
+                if(perfText) perfText.innerText = localTotalIn >= localTotalOut ? "🟢 Keuangan pribadi aman dan terkendali." : "⚠️ Pengeluaran pribadi bulanan Anda terpantau membengkak.";
             }
             
-            updateCharts(currentMode === 'bisnis' ? totalIn : 0, currentMode === 'bisnis' ? totalOut : 0, currentMode === 'pribadi' ? totalIn : 0, currentMode === 'pribadi' ? totalOut : 0);
+            updateCharts(currentMode === 'bisnis' ? localTotalIn : 0, currentMode === 'bisnis' ? localTotalOut : 0, currentMode === 'pribadi' ? localTotalIn : 0, currentMode === 'pribadi' ? localTotalOut : 0);
             displayRulesWithBudgetStatus();
             renderReportModule();
+            renderWallets();
         }
 
         function displayRulesWithBudgetStatus() {
@@ -855,7 +903,7 @@
         }
 
         async function deleteTransaction(id) {
-            if(confirm("Hapus catatan transaksi? Saldo dompet akan disesuaikan kembali.")) {
+            if(confirm("Hapus catatan transaksi? Saldo dompet akan disesuaikan kembali secara otomatis.")) {
                 try {
                     const t = cacheGlobalTransactions.find(tx => tx.firestoreId === id);
                     if(!t) return;
@@ -899,10 +947,10 @@
 
         async function addNewInventoryItem() {
             let name = prompt("Nama Barang Sembako:"); let buy = parseFloat(prompt("Harga Beli Modal (Rp):")); let sell = parseFloat(prompt("Harga Jual Toko (Rp):")); let stock = parseInt(prompt("Jumlah Stok Masuk:"));
-            if(!name || !buy || !sell || !stock) return;
+            if(!name || isNaN(buy) || isNaN(sell) || isNaN(stock)) return alert("Data tidak valid. Mohon periksa kembali!");
             await db.collection('inventory').add({ user_id: currentUser.uid, item_name: name, initial_stock: stock, current_stock: stock, buy_price: buy, sell_price: sell });
         }
-        async function deleteInventoryItem(id) { if(confirm("Hapus barang?")) await db.collection('inventory').doc(id).delete(); }
+        async function deleteInventoryItem(id) { if(confirm("Hapus produk ini secara permanen dari gudang?")) await db.collection('inventory').doc(id).delete(); }
         async function addNewDebt(isPriv) {
             let name = prompt("Nama:"); let amount = prompt("Nominal (Rp):"); if(!name || !amount) return;
             let typeOpt = prompt("Ketik '1' untuk PIUTANG\nKetik '2' untuk UTANG:", "1");
@@ -959,11 +1007,11 @@
             const filtered = bizTxs.filter(t => !reportFilterStart || (t.created_at.split(' ')[0] >= reportFilterStart && t.created_at.split(' ')[0] <= reportFilterEnd));
 
             if (activeSubReport === 'sales') {
-                const list = filtered.filter(t => t.type === 'IN' || t.description.includes('Penjualan'));
-                let totalFinansial = list.reduce((a, b) => a + (b.type === 'IN' ? parseFloat(b.amount || 0) : 0), 0);
+                const salesList = filtered.filter(t => t.type === 'IN' && t.description.includes('Penjualan'));
+                let totalFinansialSales = salesList.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
 
                 let itemQtyMap = {}; cacheInventory.forEach(i => { itemQtyMap[i.item_name] = 0; });
-                list.forEach(t => {
+                salesList.forEach(t => {
                     const match = t.description.match(/Penjualan\s*-\s*(.+?)\s*\((\d+)\s*Pcs\)/i);
                     if(match) {
                         const namePart = match[1].trim(); const qty = parseInt(match[2]) || 0;
@@ -974,35 +1022,39 @@
 
                 let sortedItems = Object.keys(itemQtyMap).map(k => ({ name: k, qty: itemQtyMap[k] })).sort((a,b) => b.qty - a.qty);
                 let terlaris = sortedItems.filter(i => i.qty > 0).slice(0, 3);
-                let slowMoving = sortedItems.slice().reverse().slice(0, 3);
+                let slowMoving = sortedItems.filter(i => i.qty === 0).slice(0, 3);
 
                 container.innerHTML = `
                     <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 text-blue-900 flex justify-between items-center text-xs">
-                        <div><p class="font-bold text-[10px] uppercase opacity-70">Total Nilai Penjualan</p><p class="text-lg font-black mt-0.5">Rp ${totalFinansial.toLocaleString('id-ID')}</p></div><span class="text-2xl">📈</span>
+                        <div><p class="font-bold text-[10px] uppercase opacity-70">Total Nilai Penjualan Barang</p><p class="text-lg font-black mt-0.5">Rp ${totalFinansialSales.toLocaleString('id-ID')}</p></div><span class="text-2xl">📈</span>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs mt-2">
-                        <div class="bg-green-50 border border-green-100 p-2.5 rounded-xl text-green-900"><p class="font-bold text-[10px] uppercase text-green-700">🔥 3 Produk Terlaris (Qty)</p><ul class="list-disc list-inside mt-1 space-y-0.5 font-medium text-[11px]">${terlaris.map(i => `<li>${i.name} (${i.qty} Pcs)</li>`).join('') || 'Belum ada data.'}</ul></div>
-                        <div class="bg-amber-50 border border-amber-100 p-2.5 rounded-xl text-amber-900"><p class="font-bold text-[10px] uppercase text-amber-700">🐢 3 Produk Slow Item</p><ul class="list-disc list-inside mt-1 space-y-0.5 font-medium text-[11px]">${slowMoving.map(i => `<li>${i.name} (${i.qty} Pcs)</li>`).join('') || 'Belum ada data.'}</ul></div>
+                        <div class="bg-green-50 border border-green-100 p-2.5 rounded-xl text-green-900"><p class="font-bold text-[10px] uppercase text-green-700">💡 3 Produk Terlaris (Periode Ini)</p><ul class="list-disc list-inside mt-1 space-y-0.5 font-medium text-[11px]">${terlaris.map(i => `<li>${i.name} (${i.qty} Pcs)</li>`).join('') || 'Belum ada produk terjual.'}</ul></div>
+                        <div class="bg-amber-50 border border-amber-100 p-2.5 rounded-xl text-amber-900"><p class="font-bold text-[10px] uppercase text-amber-700">🐢 Produk Belum Terjual</p><ul class="list-disc list-inside mt-1 space-y-0.5 font-medium text-[11px]">${slowMoving.map(i => `<li>${i.name}</li>`).join('') || 'Semua produk pernah terjual.'}</ul></div>
                     </div>`;
             } 
             else if (activeSubReport === 'profit') {
-                let pendapatan = filtered.filter(t => t.type === 'IN').reduce((a, b) => a + parseFloat(b.amount || 0), 0);
-                let hppSum = 0;
+                let omsetPenjualan = filtered.filter(t => t.type === 'IN' && t.description.includes('Penjualan')).reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+                let hppSumCalculated = 0;
+                
                 filtered.forEach(t => {
                     const match = t.description.match(/Penjualan\s*-\s*(.+?)\s*\((\d+)\s*Pcs\)/i);
                     if(match) {
                         const namePart = match[1].trim().toLowerCase(); 
                         const qty = parseInt(match[2]) || 0;
                         let matchInv = cacheInventory.find(i => i.item_name.trim().toLowerCase() === namePart);
-                        if(matchInv) hppSum += (qty * parseFloat(matchInv.buy_price || 0));
+                        if(matchInv) {
+                            hppSumCalculated += (qty * parseFloat(matchInv.buy_price || 0));
+                        }
                     }
                 });
-                let labaKotor = pendapatan - hppSum;
+                
+                let labaBersihToko = omsetPenjualan - hppSumCalculated;
                 container.innerHTML = `
-                    <div class="bg-gray-50 border p-3 rounded-xl space-y-2 text-xs font-semibold">
-                        <div class="flex justify-between"><span>Total Omset Masuk:</span><span class="text-blue-600">Rp ${pendapatan.toLocaleString('id-ID')}</span></div>
-                        <div class="flex justify-between border-b pb-1"><span>Beban Pokok Modal (HPP):</span><span class="text-amber-600">-Rp ${hppSum.toLocaleString('id-ID')}</span></div>
-                        <div class="flex justify-between pt-2 font-black text-base bg-indigo-50 p-2 rounded text-indigo-950"><span>LABA RELEVAN BERSIH:</span><span class="text-emerald-600">Rp ${labaKotor.toLocaleString('id-ID')}</span></div>
+                    <div class="bg-gray-50 border p-3 rounded-xl space-y-2 text-xs font-semibold border-gray-200 shadow-sm">
+                        <div class="flex justify-between"><span>Omset Penjualan Barang:</span><span class="text-blue-600 font-bold">Rp ${omsetPenjualan.toLocaleString('id-ID')}</span></div>
+                        <div class="flex justify-between border-b pb-1"><span>Beban Pokok Modal (HPP Sembako):</span><span class="text-amber-600 font-bold">-Rp ${hppSumCalculated.toLocaleString('id-ID')}</span></div>
+                        <div class="flex justify-between pt-2 font-black text-sm bg-indigo-50 p-2 rounded text-indigo-950"><span>LABA RELEVAN BERSIH:</span><span class="${labaBersihToko >= 0 ? 'text-emerald-600' : 'text-red-600'}">Rp ${labaBersihToko.toLocaleString('id-ID')}</span></div>
                     </div>`;
             }
             else if (activeSubReport === 'buy') {
@@ -1010,10 +1062,10 @@
                 const totalBuy = buyTxs.reduce((a, b) => a + parseFloat(b.amount || 0), 0);
                 container.innerHTML = `
                     <div class="bg-amber-50 p-3 rounded-xl border border-amber-100 text-amber-900 flex justify-between items-center text-xs">
-                        <div><p class="font-bold text-[10px] uppercase opacity-70">Total Nilai Pembelian/Modal</p><p class="text-lg font-black mt-0.5">Rp ${totalBuy.toLocaleString('id-ID')}</p></div><span class="text-2xl">🧾</span>
+                        <div><p class="font-bold text-[10px] uppercase opacity-70">Total Pengeluaran Belanja Modal</p><p class="text-lg font-black mt-0.5">Rp ${totalBuy.toLocaleString('id-ID')}</p></div><span class="text-2xl">🧾</span>
                     </div>
-                    <div class="space-y-1 mt-2">
-                        ${buyTxs.map(t => `<div class="bg-gray-50 p-2 rounded-lg text-[11px] flex justify-between border border-gray-100"><span>${t.description}</span><span class="font-bold text-amber-700">Rp ${parseFloat(t.amount || 0).toLocaleString('id-ID')}</span></div>`).join('') || '<p class="text-gray-400 text-center text-xs py-4">Belum ada catatan pembelian/kulakan pada periode ini.</p>'}
+                    <div class="space-y-1 mt-2 max-h-48 overflow-y-auto">
+                        ${buyTxs.map(t => `<div class="bg-gray-50 p-2 rounded-lg text-[11px] flex justify-between border border-gray-100"><span>${t.description}</span><span class="font-bold text-amber-700">Rp ${parseFloat(t.amount || 0).toLocaleString('id-ID')}</span></div>`).join('') || '<p class="text-gray-400 text-center text-xs py-4">Tidak ada catatan kulakan barang.</p>'}
                     </div>`;
             }
             else if (activeSubReport === 'stock') {
@@ -1021,9 +1073,9 @@
                 const totalStockQty = cacheInventory.reduce((a, i) => a + i.current_stock, 0);
                 container.innerHTML = `
                     <div class="bg-indigo-50 p-3 rounded-xl border border-indigo-100 text-indigo-900 flex justify-between items-center text-xs">
-                        <div><p class="font-bold text-[10px] uppercase opacity-70">Total Nilai Aset Stok (Modal)</p><p class="text-lg font-black mt-0.5">Rp ${totalStockValue.toLocaleString('id-ID')}</p><p class="text-[10px] font-semibold mt-0.5">${totalStockQty} Pcs di gudang</p></div><span class="text-2xl">📦</span>
+                        <div><p class="font-bold text-[10px] uppercase opacity-70">Total Nilai Aset Stok Toko (Modal Terikat)</p><p class="text-lg font-black mt-0.5">Rp ${totalStockValue.toLocaleString('id-ID')}</p><p class="text-[10px] font-semibold mt-0.5">${totalStockQty} Pcs tersisa di gudang</p></div><span class="text-2xl">📦</span>
                     </div>
-                    <div class="space-y-1 mt-2">
+                    <div class="space-y-1 mt-2 max-h-48 overflow-y-auto">
                         ${cacheInventory.map(i => `<div class="bg-gray-50 p-2 rounded-lg text-[11px] flex justify-between border border-gray-100"><span>${i.item_name} (${i.current_stock} Pcs)</span><span class="font-bold text-indigo-700">Rp ${(i.current_stock * parseFloat(i.buy_price || 0)).toLocaleString('id-ID')}</span></div>`).join('') || '<p class="text-gray-400 text-center text-xs py-4">Belum ada barang di inventory.</p>'}
                     </div>`;
             }
@@ -1033,18 +1085,18 @@
                 const totalUtang = bizDebts.filter(d => d.type === 'UTANG' && d.status === 'BELUM LUNAS').reduce((a, b) => a + parseFloat(b.amount || 0), 0);
                 container.innerHTML = `
                     <div class="grid grid-cols-2 gap-2 text-xs">
-                        <div class="bg-blue-50 border border-blue-100 p-2.5 rounded-xl text-blue-900"><p class="font-bold text-[10px] uppercase">Piutang Belum Lunas</p><p class="text-base font-black mt-0.5">Rp ${totalPiutang.toLocaleString('id-ID')}</p></div>
-                        <div class="bg-red-50 border border-red-100 p-2.5 rounded-xl text-red-900"><p class="font-bold text-[10px] uppercase">Utang Belum Lunas</p><p class="text-base font-black mt-0.5">Rp ${totalUtang.toLocaleString('id-ID')}</p></div>
+                        <div class="bg-blue-50 border border-blue-100 p-2.5 rounded-xl text-blue-900"><p class="font-bold text-[10px] uppercase">Piutang (Bon Pelanggan)</p><p class="text-base font-black mt-0.5">Rp ${totalPiutang.toLocaleString('id-ID')}</p></div>
+                        <div class="bg-red-50 border border-red-100 p-2.5 rounded-xl text-red-900"><p class="font-bold text-[10px] uppercase">Utang (Ke Sales/Agen)</p><p class="text-base font-black mt-0.5">Rp ${totalUtang.toLocaleString('id-ID')}</p></div>
                     </div>
-                    <div class="space-y-1 mt-2">
-                        ${bizDebts.filter(d => d.status === 'BELUM LUNAS').map(d => `<div class="bg-gray-50 p-2 rounded-lg text-[11px] flex justify-between border border-gray-100"><span>${d.person_name} [${d.type}]</span><span class="font-bold">Rp ${parseFloat(d.amount || 0).toLocaleString('id-ID')}</span></div>`).join('') || '<p class="text-gray-400 text-center text-xs py-4">Tidak ada bon yang belum lunas.</p>'}
+                    <div class="space-y-1 mt-2 max-h-48 overflow-y-auto">
+                        ${bizDebts.filter(d => d.status === 'BELUM LUNAS').map(d => `<div class="bg-gray-50 p-2 rounded-lg text-[11px] flex justify-between border border-gray-100"><span>${d.person_name} [${d.type}]</span><span class="font-bold">Rp ${parseFloat(d.amount || 0).toLocaleString('id-ID')}</span></div>`).join('') || '<p class="text-gray-400 text-center text-xs py-4">Semua hutang piutang lunas.</p>'}
                     </div>`;
             }
             else if (activeSubReport === 'opname') {
                 container.innerHTML = `
-                    <div class="overflow-x-auto">
+                    <div class="overflow-x-auto max-h-56 overflow-y-auto">
                         <table class="w-full text-[11px] text-left">
-                            <thead><tr class="text-gray-400 uppercase text-[9px]"><th class="py-1">Barang</th><th class="py-1 text-right">Awal</th><th class="py-1 text-right">Sisa</th><th class="py-1 text-right">Terpakai</th></tr></thead>
+                            <thead><tr class="text-gray-400 uppercase text-[9px] border-b"><th class="py-1">Barang</th><th class="py-1 text-right">Awal</th><th class="py-1 text-right">Sisa</th><th class="py-1 text-right">Terjual</th></tr></thead>
                             <tbody>
                                 ${cacheInventory.map(i => `<tr class="border-t border-gray-100"><td class="py-1.5 font-semibold">${i.item_name}</td><td class="py-1.5 text-right">${i.initial_stock}</td><td class="py-1.5 text-right ${i.current_stock <= 5 ? 'text-red-600 font-bold' : ''}">${i.current_stock}</td><td class="py-1.5 text-right text-gray-500">${i.initial_stock - i.current_stock}</td></tr>`).join('') || `<tr><td colspan="4" class="text-gray-400 text-center py-4">Belum ada barang untuk di-opname.</td></tr>`}
                             </tbody>
@@ -1071,40 +1123,40 @@
             } catch(e) { console.error("Gagal memperbarui grafik:", e); }
         }
 
-        function handleTxTypeChange() { 
-            const box = document.getElementById('allocation-select-box');
-            if(box) box.classList.toggle('hidden', document.getElementById('tx-type').value !== 'OUT'); 
-        }
-        function handlePrivateTxTypeChange() { 
-            const box = document.getElementById('private-allocation-select-box');
-            if(box) box.classList.toggle('hidden', document.getElementById('private-tx-type').value !== 'OUT'); 
-        }
-        function calculateLiveAllocation(isPriv) {
-            const prefix = isPriv === 1 ? 'private-' : ''; const amount = parseFloat(document.getElementById(`${prefix}tx-amount`).value) || 0;
-            const type = document.getElementById(`${prefix}tx-type`).value; const box = document.getElementById(`${prefix}allocation-box`);
-            const rules = activeRules.filter(r => r.is_private === isPriv);
-            if (amount <= 0 || type !== 'IN' || rules.length === 0) { if(box) box.classList.add('hidden'); return; }
-            if(box) box.classList.remove('hidden');
-            const listEl = document.getElementById(`${prefix}live-allocation-list`);
-            if(listEl) listEl.innerHTML = rules.map(r => `<li>• Ke <b>${r.category_name} (${r.percentage}%)</b>: Rp ${Math.round((r.percentage / 100) * amount).toLocaleString('id-ID')}</li>`).join('');
-        }
         function toggleCustomDate(isPriv) { document.getElementById(isPriv === 1 ? 'custom-date-box-priv' : 'custom-date-box-shop').classList.toggle('hidden'); }
         function applyCustomFilter(isPriv) {
             if(isPriv === 0) { filterStartShop = document.getElementById('filter-start-date-shop').value; filterEndShop = document.getElementById('filter-end-date-shop').value; }
             else { filterStartPriv = document.getElementById('filter-start-date-priv').value; filterEndPriv = document.getElementById('filter-end-date-priv').value; }
             renderTransactions();
         }
+
+        // PERBAIKAN: SET FILTER LOG RIWAYAT DENGAN OPSI SANGAT LENGKAP
         function setFilterTime(type, isPriv) {
             const today = new Date(); const formatDate = (d) => d.toISOString().split('T')[0];
             let start = '', end = '';
-            if (type === 'kemarin') { const y = new Date(); y.setDate(today.getDate() - 1); start = formatDate(y); end = formatDate(y); }
-            else if (type === '7hari') { const p7 = new Date(); p7.setDate(today.getDate() - 7); start = formatDate(p7); end = formatDate(today); }
             
-            if(isPriv === 0) { filterStartShop = start; filterEndShop = end; document.getElementById('custom-date-box-shop').classList.add('hidden'); } 
-            else { filterStartPriv = start; filterEndPriv = end; document.getElementById('custom-date-box-priv').classList.add('hidden'); }
+            if (type === 'hari_ini') { 
+                start = formatDate(today); end = formatDate(today); 
+            } else if (type === 'kemarin') {
+                const y = new Date(); y.setDate(today.getDate() - 1); start = formatDate(y); end = formatDate(y);
+            } else if (type === '7hari') { 
+                const p7 = new Date(); p7.setDate(today.getDate() - 7); start = formatDate(p7); end = formatDate(today); 
+            } else if (type === '30hari') {
+                const p30 = new Date(); p30.setDate(today.getDate() - 30); start = formatDate(p30); end = formatDate(today);
+            } else if (type === 'all') {
+                start = ''; end = '';
+            }
+            
+            if(isPriv === 0) { 
+                filterStartShop = start; filterEndShop = end; 
+                document.getElementById('custom-date-box-shop').classList.add('hidden'); 
+            } else { 
+                filterStartPriv = start; filterEndPriv = end; 
+                document.getElementById('custom-date-box-priv').classList.add('hidden'); 
+            }
             
             const prefix = isPriv === 0 ? 'shop' : 'priv';
-            ['all', 'kemarin', '7hari'].forEach(b => {
+            ['hari_ini', 'kemarin', '7hari', '30hari', 'all'].forEach(b => {
                 const btn = document.getElementById(`btn-f-${prefix}-${b}`);
                 if(btn) {
                     if(b === type) {
