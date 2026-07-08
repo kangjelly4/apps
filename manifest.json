@@ -3,12 +3,12 @@
   "short_name": "Finance",
   "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#4f46e5",
-  "theme_color": "#4f46e5",
+  "background_color": "ffffff",
+  "theme_color": "ffffff",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "https://i.ibb.co.com/Xfmdy0Qx/edc2b026-9541-42a5-bb16-0cb9d11fb45f.png",
+      "src": "https://i.ibb.co.com/PZ8rh29j/e66491f6-5f06-409c-a1e7-c668d0da2098.jpg",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
