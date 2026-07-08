@@ -1171,16 +1171,46 @@
 
         // --- SERVICE WORKER PWA ---
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                const b = new Blob([`
-                    const CACHE_NAME = 'finance-v1';
-                    self.addEventListener('install', e => self.skipWaiting());
-                    self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
-                `], { type: 'application/javascript' });
-                const u = URL.createObjectURL(b);
-                navigator.serviceWorker.register(u).then(() => console.log('PWA Service Worker Aktif!')).catch(e => console.log('Gagal:', e));
+    window.addEventListener('load', () => {
+        // Menggunakan nama file dinamis agar fleksibel di server manapun
+        const currentFileName = window.location.pathname.split('/').pop() || 'index.html';
+        
+        const b = new Blob([`
+            const CACHE_NAME = 'finance-v2'; // Versi cache dinaikkan agar cache lama dibuang
+            
+            self.addEventListener('install', e => {
+                self.skipWaiting();
             });
-        }
+            
+            self.addEventListener('activate', e => {
+                // Bersihkan semua cache lama yang merusak sistem routing PWA
+                e.waitUntil(
+                    caches.keys().then(keys => {
+                        return Promise.all(
+                            keys.map(key => {
+                                if (key !== CACHE_NAME) {
+                                    return caches.delete(key);
+                                }
+                            })
+                        );
+                    }).then(() => self.clients.claim())
+                );
+            });
+            
+            self.addEventListener('fetch', e => {
+                // Memastikan request online selalu diutamakan daripada cache offline lama
+                e.respondWith(
+                    fetch(e.request).catch(() => caches.match(e.request))
+                );
+            });
+        `], { type: 'application/javascript' });
+        
+        const u = URL.createObjectURL(b);
+        navigator.serviceWorker.register(u)
+            .then(() => console.log('Service Worker PWA Terkalibrasi Aman!'))
+            .catch(e => console.error('Gagal:', e));
+    });
+}
     </script>
 </body>
 </html>
