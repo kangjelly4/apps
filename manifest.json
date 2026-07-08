@@ -1,7 +1,7 @@
 {
   "name": "Finance Pro",
   "short_name": "Finance",
-  "start_url": "pro_6.html",
+  "start_url": "index.html",
   "display": "standalone",
   "background_color": "#4f46e5",
   "theme_color": "#4f46e5",
