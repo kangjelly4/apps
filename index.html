@@ -190,7 +190,7 @@
                             <div id="debt-list-display" class="space-y-2"></div>
                         </div>
                         <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
-                            <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-gray-700">🎯 Rencana Tabungan Usaha</h3><button onclick="addNewGoal(0)" class="text-xs text-indigo-600 font-bold">+ Rencana</button></div>
+                            <div class="flex justify-between items-center"><h3 class="font-bold text-sm text-gray-700">🎯 Rencana Tabungan Pribadi</h3><button onclick="addNewGoal(0)" class="text-xs text-indigo-600 font-bold">+ Rencana</button></div>
                             <div id="goals-display-list" class="space-y-3"></div>
                         </div>
                     </div>
@@ -340,11 +340,19 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
+        // FUNGSI UTAMA UNTUK MENDAPATKAN TANGGAL LOKAL YANG AKURAT 100%
+        function getLocalDateString(dateObj = new Date()) {
+            const yyyy = dateObj.getFullYear();
+            const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const dd = String(dateObj.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
         let currentUser = null;
         let allWallets = [], activeRules = [], myChart = null, myPrivateChart = null;
         
-        // KUNCI AWAL: LOG PERTAMA KALI DIBUKA OTOMATIS FILTER HARI INI
-        const todayStr = new Date().toISOString().split('T')[0];
+        // INISIALISASI TANGGAL LOKAL
+        const todayStr = getLocalDateString();
         let filterStartShop = todayStr, filterEndShop = todayStr;
         let filterStartPriv = todayStr, filterEndPriv = todayStr;
         
@@ -445,7 +453,6 @@
                 renderDebts();
                 renderGoals();
             }
-            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         let isRegisterMode = false;
@@ -512,7 +519,7 @@
             db.collection('wallets').where('user_id', '==', uId).onSnapshot(snap => {
                 allWallets = snap.docs.map(d => ({ firestoreId: d.id, ...d.data() }));
                 renderWallets();
-            }, (error) => { console.error("Gagal memuat dompet:", error); alert("Gagal memuat data dompet: " + error.message); });
+            }, (error) => { console.error("Gagal memuat dompet:", error); });
 
             db.collection('allocation_rules').where('user_id', '==', uId).onSnapshot(snap => {
                 activeRules = snap.docs.map(d => ({ firestoreId: d.id, ...d.data() }));
@@ -542,10 +549,7 @@
                 cacheGlobalTransactions = snap.docs.map(d => ({ firestoreId: d.id, ...d.data() }));
                 cacheGlobalTransactions.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
                 renderTransactions();
-            }, (error) => {
-                console.error("Gagal memuat transaksi:", error);
-                alert("Gagal memuat data transaksi dari cloud. Alasan: " + error.message);
-            });
+            }, (error) => { console.error("Gagal memuat transaksi:", error); });
         }
 
         function renderWallets() {
@@ -591,158 +595,94 @@
         function renderInventory() {
             const displayEl = document.getElementById('inventory-list-display');
             if(!displayEl) return;
-            
             const searchKeyword = document.getElementById('search-inventory')?.value.toLowerCase() || '';
             const filteredInventory = cacheInventory.filter(i => i.item_name.toLowerCase().includes(searchKeyword));
-            
             displayEl.innerHTML = filteredInventory.map(i => {
                 const profitPerItem = parseFloat(i.sell_price || 0) - parseFloat(i.buy_price || 0); 
                 const isStockLow = i.current_stock <= 5;
-                return `
-                    <div class="border p-3 rounded-2xl flex flex-col gap-2 text-xs bg-white border-gray-200 relative overflow-hidden shadow-sm">
-                        ${isStockLow ? `<div class="absolute top-0 right-0 bg-red-600 text-white font-black px-3 py-0.5 rounded-bl-xl text-[9px]">🚨 STOK MINIM</div>` : ''}
-                        
-                        <div class="flex justify-between items-start gap-2">
-                            <div class="font-black text-sm text-gray-800 break-all pr-2">🛒 ${i.item_name}</div>
-                            <div class="flex items-center gap-1.5 shrink-0">
-                                <button onclick="editInventoryItem('${i.firestoreId}', '${i.item_name}', ${i.buy_price}, ${i.sell_price})" class="text-[10px] bg-gray-100 hover:bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-md font-bold border border-gray-200 transition-colors">⚙️ Edit</button>
-                                <button onclick="deleteInventoryItem('${i.firestoreId}')" class="text-gray-300 hover:text-red-500 font-bold px-1 text-sm transition-colors">✖</button>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-3 gap-1 bg-gray-50 p-2 rounded-xl border border-gray-100 font-medium text-gray-600 text-[10px]">
-                            <div>Beli: <span class="block font-bold text-gray-900">Rp ${parseFloat(i.buy_price || 0).toLocaleString('id-ID')}</span></div>
-                            <div>Jual: <span class="block font-bold text-gray-900">Rp ${parseFloat(i.sell_price || 0).toLocaleString('id-ID')}</span></div>
-                            <div>Profit: <span class="block font-bold text-emerald-600">+Rp ${profitPerItem.toLocaleString('id-ID')}</span></div>
-                        </div>
-                        <div class="flex justify-between items-center pt-1 mt-auto">
-                            <div class="text-[10px] text-gray-500 font-semibold">Awal: ${i.initial_stock} | Sisa: <span class="font-black ${isStockLow?'text-red-600':'text-indigo-600'}">${i.current_stock} Pcs</span></div>
-                            <div class="flex gap-1">
-                                <button onclick="adjustStock('${i.firestoreId}', ${i.current_stock}, 1, '${i.item_name}', ${i.buy_price}, ${i.sell_price})" class="bg-green-600 text-white font-bold px-2 py-1 rounded-lg text-[9px] shadow-sm">+ Pasokan</button>
-                                <button onclick="adjustStock('${i.firestoreId}', ${i.current_stock}, -1, '${i.item_name}', ${i.buy_price}, ${i.sell_price})" class="bg-amber-500 text-white font-bold px-2 py-1 rounded-lg text-[9px] shadow-sm">- Jual/Keluar</button>
-                            </div>
-                        </div>
-                    </div>`;
+                return `<div class="border p-3 rounded-2xl flex flex-col gap-2 text-xs bg-white border-gray-200 relative overflow-hidden shadow-sm">${isStockLow ? `<div class="absolute top-0 right-0 bg-red-600 text-white font-black px-3 py-0.5 rounded-bl-xl text-[9px]">🚨 STOK MINIM</div>` : ''}<div class="flex justify-between items-start gap-2"><div class="font-black text-sm text-gray-800 break-all pr-2">🛒 ${i.item_name}</div><div class="flex items-center gap-1.5 shrink-0"><button onclick="editInventoryItem('${i.firestoreId}', '${i.item_name}', ${i.buy_price}, ${i.sell_price})" class="text-[10px] bg-gray-100 hover:bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-md font-bold border border-gray-200 transition-colors">⚙️ Edit</button><button onclick="deleteInventoryItem('${i.firestoreId}')" class="text-gray-300 hover:text-red-500 font-bold px-1 text-sm transition-colors">✖</button></div></div><div class="grid grid-cols-3 gap-1 bg-gray-50 p-2 rounded-xl border border-gray-100 font-medium text-gray-600 text-[10px]"><div>Beli: <span class="block font-bold text-gray-900">Rp ${parseFloat(i.buy_price || 0).toLocaleString('id-ID')}</span></div><div>Jual: <span class="block font-bold text-gray-900">Rp ${parseFloat(i.sell_price || 0).toLocaleString('id-ID')}</span></div><div>Profit: <span class="block font-bold text-emerald-600">+Rp ${profitPerItem.toLocaleString('id-ID')}</span></div></div><div class="flex justify-between items-center pt-1 mt-auto"><div class="text-[10px] text-gray-500 font-semibold">Awal: ${i.initial_stock} | Sisa: <span class="font-black ${isStockLow?'text-red-600':'text-indigo-600'}">${i.current_stock} Pcs</span></div><div class="flex gap-1"><button onclick="adjustStock('${i.firestoreId}', ${i.current_stock}, 1, '${i.item_name}', ${i.buy_price}, ${i.sell_price})" class="bg-green-600 text-white font-bold px-2 py-1 rounded-lg text-[9px] shadow-sm">+ Pasokan</button><button onclick="adjustStock('${i.firestoreId}', ${i.current_stock}, -1, '${i.item_name}', ${i.buy_price}, ${i.sell_price})" class="bg-amber-500 text-white font-bold px-2 py-1 rounded-lg text-[9px] shadow-sm">- Jual/Keluar</button></div></div></div>`;
             }).join('') || '<p class="text-gray-400 text-center text-xs py-6 col-span-full">Produk tidak ditemukan atau gudang kosong.</p>';
         }
 
         async function editInventoryItem(docId, oldName, oldBuy, oldSell) {
-            const newName = prompt("Ubah Nama Barang Sembako:", oldName);
-            if (!newName) return;
-            const newBuyStr = prompt("Ubah Harga Beli Modal (HPP) (Rp):", oldBuy);
-            if (!newBuyStr) return;
-            const newSellStr = prompt("Ubah Harga Jual Toko (Rp):", oldSell);
-            if (!newSellStr) return;
-
-            try {
-                await db.collection('inventory').doc(docId).update({
-                    item_name: newName,
-                    buy_price: parseFloat(newBuyStr),
-                    sell_price: parseFloat(newSellStr)
-                });
-                alert("🎉 Data barang berhasil diperbarui!");
-            } catch (error) {
-                alert("Gagal merubah data barang: " + error.message);
-            }
+            const newName = prompt("Ubah Nama Barang Sembako:", oldName); if (!newName) return;
+            const newBuyStr = prompt("Ubah Harga Beli Modal (HPP) (Rp):", oldBuy); if (!newBuyStr) return;
+            const newSellStr = prompt("Ubah Harga Jual Toko (Rp):", oldSell); if (!newSellStr) return;
+            try { await db.collection('inventory').doc(docId).update({ item_name: newName, buy_price: parseFloat(newBuyStr), sell_price: parseFloat(newSellStr) }); alert("🎉 Data barang berhasil diperbarui!"); } catch (error) { alert("Gagal merubah data barang: " + error.message); }
         }
 
         async function adjustStock(docId, currentStock, modifier, itemName, buyPrice, sellPrice) {
             let qtyChange = parseInt(prompt("Masukkan jumlah kuantitas produk:")); if (!qtyChange || qtyChange <= 0) return;
             let newStock = currentStock + (modifier * qtyChange); if (newStock < 0) return alert("Stok di gudang tidak mencukupi!");
-
             let reason = ""; let txType = ""; let finalAmount = 0;
             if (modifier > 0) {
                 let opt = prompt("Pilih Jenis Pasokan Masuk:\n1. Pembelian / Kulakan Barang\n2. Hasil Produksi Sendiri\n3. Lain-lain", "1");
-                if (opt === "1") { reason = "Kulakan Barang"; txType = "OUT"; finalAmount = parseFloat(buyPrice || 0) * qtyChange; }
-                else if (opt === "2") { reason = "Hasil Produksi"; txType = ""; }
-                else { reason = "Pasokan Lainnya"; }
+                if (opt === "1") { reason = "Kulakan Barang"; txType = "OUT"; finalAmount = parseFloat(buyPrice || 0) * qtyChange; } else if (opt === "2") { reason = "Hasil Produksi"; txType = ""; } else { reason = "Pasokan Lainnya"; }
             } else {
                 let opt = prompt("Pilih Alasan Stok Keluar:\n1. Penjualan Barang\n2. Barang Rusak / Kadaluarsa\n3. Pemakaian Pribadi (Owner)", "1");
-                if (opt === "1") { 
-                    reason = "Penjualan"; 
-                    txType = "IN"; 
-                    finalAmount = parseFloat(sellPrice || 0) * qtyChange; 
-                }
-                else if (opt === "2") { reason = "Barang Rusak"; txType = "OUT"; finalAmount = parseFloat(buyPrice || 0) * qtyChange; }
-                else { reason = "Pemakaian Pribadi"; }
+                if (opt === "1") { reason = "Penjualan"; txType = "IN"; finalAmount = parseFloat(sellPrice || 0) * qtyChange; } else if (opt === "2") { reason = "Barang Rusak"; txType = "OUT"; finalAmount = parseFloat(buyPrice || 0) * qtyChange; } else { reason = "Pemakaian Pribadi"; }
             }
-
             let walletId = null;
             if (txType !== "") {
-                const bWallets = allWallets.filter(w => w.is_private === 0);
-                if (bWallets.length === 0) return alert("Buat akun laci kas dompet toko dulu di Beranda!");
+                const bWallets = allWallets.filter(w => w.is_private === 0); if (bWallets.length === 0) return alert("Buat laci kas dompet toko dulu di Beranda!");
                 walletId = bWallets[0].firestoreId;
-                
                 const updatedBalance = parseFloat(bWallets[0].balance || 0) + (txType === 'IN' ? finalAmount : -finalAmount);
                 await db.collection('wallets').doc(walletId).update({ balance: updatedBalance });
             }
-
             const d = new Date();
             const now = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().replace('T', ' ').substring(0, 19);
             const desc = modifier < 0 && reason === "Penjualan" ? `Penjualan - ${itemName} (${qtyChange} Pcs)` : `[Stok] ${reason} - ${itemName} (${qtyChange} Pcs) Mdl:Rp ${buyPrice}`;
-
             await db.collection('inventory').doc(docId).update({ current_stock: newStock });
             if (txType !== "" || reason === "Pemakaian Pribadi" || reason === "Hasil Produksi") {
                 await db.collection('transactions').add({ user_id: currentUser.uid, wallet_id: walletId || '', amount: finalAmount, type: txType || 'OUT', description: desc, is_private: 0, category_allocation: 'Umum', created_at: now });
             }
         }
 
-        // ==================== REPARASI TOTAL LOGIKA PERHITUNGAN TRANSAKSI, SALES & HPP SINKRON ====================
+        // ==================== LOGIKA PENYARINGAN TRANSAKSI YANG SUDAH DIREPARASI TOTAL ====================
         function renderTransactions() {
             const isPrivFlag = currentMode === 'pribadi' ? 1 : 0;
             const filtered = cacheGlobalTransactions.filter(t => t.is_private === isPrivFlag);
 
             const filterDataByDate = (arr, s, e) => {
                 if (!s || !e) return arr;
-                return arr.filter(t => t.created_at.split(' ')[0] >= s && t.created_at.split(' ')[0] <= e);
+                return arr.filter(t => {
+                    if (!t.created_at) return false;
+                    // Bersihkan spasi atau karakter newline tidak kasat mata, lalu ambil YYYY-MM-DD
+                    const txDate = t.created_at.trim().split(' ')[0];
+                    return txDate >= s && txDate <= e;
+                });
             };
 
-            const targetList = filterDataByDate(filtered, currentMode === 'bisnis' ? filterStartShop : filterStartPriv, currentMode === 'bisnis' ? filterEndShop : filterEndPriv);
+            const activeStart = currentMode === 'bisnis' ? filterStartShop : filterStartPriv;
+            const activeEnd = currentMode === 'bisnis' ? filterEndShop : filterEndPriv;
+
+            const targetList = filterDataByDate(filtered, activeStart, activeEnd);
             
-            let localTotalIn = 0;
-            let localTotalOut = 0;
-            let localTotalSales = 0;
-            let localTotalHppCalculated = 0; // HPP Dinamis ikut rentang filter log riwayat aktif
-            let localSoldQty = 0;
+            let localTotalIn = 0; let localTotalOut = 0;
+            let localTotalSales = 0; let localTotalHppCalculated = 0; let localSoldQty = 0;
 
             if(currentMode === 'bisnis') {
-                totalIncomeShop = 0; 
-                shopAllocationMap = {};
-                
+                totalIncomeShop = 0; shopAllocationMap = {};
                 targetList.forEach(t => { 
                     if(t.type === 'IN') { 
-                        localTotalIn += parseFloat(t.amount || 0); 
-                        totalIncomeShop += parseFloat(t.amount || 0); 
+                        localTotalIn += parseFloat(t.amount || 0); totalIncomeShop += parseFloat(t.amount || 0); 
                         if (t.description && t.description.includes("Penjualan")) {
                             localTotalSales += parseFloat(t.amount || 0);
-                            
-                            // Ekstrak kuantitas item terjual untuk menghitung HPP dinamis secara real-time
                             const match = t.description.match(/Penjualan\s*-\s*(.+?)\s*\((\d+)\s*Pcs\)/i);
                             if(match) {
-                                const namePart = match[1].trim().toLowerCase(); 
-                                const qty = parseInt(match[2]) || 0;
-                                localSoldQty += qty;
+                                const namePart = match[1].trim().toLowerCase(); const qty = parseInt(match[2]) || 0; localSoldQty += qty;
                                 let matchInv = cacheInventory.find(i => i.item_name.trim().toLowerCase() === namePart);
-                                if(matchInv) {
-                                    localTotalHppCalculated += (qty * parseFloat(matchInv.buy_price || 0));
-                                }
+                                if(matchInv) localTotalHppCalculated += (qty * parseFloat(matchInv.buy_price || 0));
                             }
                         }
-                    } else { 
-                        localTotalOut += parseFloat(t.amount || 0); 
-                    } 
+                    } else { localTotalOut += parseFloat(t.amount || 0); } 
                 });
                 targetList.forEach(t => { if(t.type === 'OUT' && t.category_allocation !== 'Umum') shopAllocationMap[t.category_allocation] = (shopAllocationMap[t.category_allocation] || 0) + parseFloat(t.amount || 0); });
             } else {
-                totalIncomePriv = 0;
-                privAllocationMap = {};
+                totalIncomePriv = 0; privAllocationMap = {};
                 targetList.forEach(t => { 
-                    if(t.type === 'IN') { 
-                        totalIncomePriv += parseFloat(t.amount || 0); 
-                        localTotalIn += parseFloat(t.amount || 0); 
-                    } else { 
-                        localTotalOut += parseFloat(t.amount || 0); 
-                    } 
+                    if(t.type === 'IN') { totalIncomePriv += parseFloat(t.amount || 0); localTotalIn += parseFloat(t.amount || 0); } 
+                    else { localTotalOut += parseFloat(t.amount || 0); } 
                 });
                 targetList.forEach(t => { if(t.type === 'OUT' && t.category_allocation !== 'Umum') privAllocationMap[t.category_allocation] = (privAllocationMap[t.category_allocation] || 0) + parseFloat(t.amount || 0); });
             }
@@ -750,7 +690,8 @@
             const historyContainer = document.getElementById(currentMode === 'bisnis' ? 'transaction-history' : 'private-transaction-history');
             if(historyContainer) {
                 historyContainer.innerHTML = targetList.map(t => {
-                    const parts = t.created_at.split(' '); const dateParts = parts[0].split('-');
+                    if(!t.created_at) return '';
+                    const parts = t.created_at.trim().split(' '); const dateParts = parts[0].split('-');
                     return `
                         <div class="bg-gray-50 p-2.5 rounded-xl flex justify-between items-center text-xs border border-gray-100 mb-1">
                             <div><p class="font-bold text-gray-800">${t.description}</p><p class="text-[9px] text-gray-400 font-mono">${dateParts[2] || '00'}/${dateParts[1] || '00'} ${parts[1]?.slice(0,5) || ''} ${t.type === 'OUT' ? `• Pos: ${t.category_allocation}` : ''}</p></div>
@@ -761,12 +702,10 @@
 
             const perfText = document.getElementById('perf-text-smart');
             if (currentMode === 'bisnis') {
-                // SINKRONISASI VISUAL: Tampilan Dasbor Beranda mengikuti Filter log riwayat aktif
                 document.getElementById('dash-sales').innerText = "Rp " + localTotalSales.toLocaleString('id-ID');
                 document.getElementById('dash-hpp').innerText = "Rp " + localTotalHppCalculated.toLocaleString('id-ID');
                 document.getElementById('dash-sales-qty').innerText = localSoldQty + " Pcs Terjual";
                 document.getElementById('dash-profit').innerText = "Rp " + (localTotalSales - localTotalHppCalculated).toLocaleString('id-ID');
-                
                 if(perfText) perfText.innerText = localTotalIn > localTotalOut ? "📈 Performa Surplus! Laba kas masuk toko berjalan lebih tinggi dibanding pengeluaran." : "🚨 Defisit Toko! Pengeluaran belanja modal melampaui omset harian.";
             } else {
                 if(perfText) perfText.innerText = localTotalIn >= localTotalOut ? "🟢 Keuangan pribadi aman dan terkendali." : "⚠️ Pengeluaran pribadi bulanan Anda terpantau membengkak.";
@@ -783,22 +722,10 @@
             const filteredRules = activeRules.filter(r => r.is_private === isPrivFlag);
             const currentMap = currentMode === 'bisnis' ? shopAllocationMap : privAllocationMap;
             const currentInc = currentMode === 'bisnis' ? totalIncomeShop : totalIncomePriv;
-
             const html = filteredRules.map(r => {
-                const maxBudget = (parseFloat(r.percentage || 0) / 100) * currentInc;
-                const currentSpent = currentMap[r.category_name] || 0;
-                const remainingBudget = maxBudget - currentSpent;
-                return `
-                    <div class="p-2.5 rounded-xl border text-xs ${remainingBudget < 0 ? 'bg-red-50 border-red-200 text-red-900' : 'bg-gray-50 border-gray-100'}">
-                        <div class="flex justify-between items-center mb-1"><span class="font-bold">📌 ${r.category_name} (${r.percentage}%)</span><div class="flex gap-2 text-[10px]"><button onclick="editRule('${r.firestoreId}')" class="text-blue-500 font-bold">Edit</button><button onclick="deleteRule('${r.firestoreId}')" class="text-red-500 font-bold">Hapus</button></div></div>
-                        <div class="grid grid-cols-3 gap-1 font-medium opacity-90 text-[10px]">
-                            <div>Batas:<span class="block font-bold">Rp ${Math.round(maxBudget).toLocaleString('id-ID')}</span></div>
-                            <div>Pakai:<span class="block font-bold">Rp ${currentSpent.toLocaleString('id-ID')}</span></div>
-                            <div>Sisa:<span class="block ${remainingBudget < 0 ? 'text-red-600 font-black' : 'text-emerald-600 font-black'}">Rp ${Math.round(remainingBudget).toLocaleString('id-ID')}</span></div>
-                        </div>
-                    </div>`;
+                const maxBudget = (parseFloat(r.percentage || 0) / 100) * currentInc; const currentSpent = currentMap[r.category_name] || 0; const remainingBudget = maxBudget - currentSpent;
+                return `<div class="p-2.5 rounded-xl border text-xs ${remainingBudget < 0 ? 'bg-red-50 border-red-200 text-red-900' : 'bg-gray-50 border-gray-100'}"><div class="flex justify-between items-center mb-1"><span class="font-bold">📌 ${r.category_name} (${r.percentage}%)</span><div class="flex gap-2 text-[10px]"><button onclick="editRule('${r.firestoreId}')" class="text-blue-500 font-bold">Edit</button><button onclick="deleteRule('${r.firestoreId}')" class="text-red-500 font-bold">Hapus</button></div></div><div class="grid grid-cols-3 gap-1 font-medium opacity-90 text-[10px]"><div>Batas:<span class="block font-bold">Rp ${Math.round(maxBudget).toLocaleString('id-ID')}</span></div><div>Pakai:<span class="block font-bold">Rp ${currentSpent.toLocaleString('id-ID')}</span></div><div>Sisa:<span class="block ${remainingBudget < 0 ? 'text-red-600 font-black' : 'text-emerald-600 font-black'}">Rp ${Math.round(remainingBudget).toLocaleString('id-ID')}</span></div></div></div>`;
             }).join('') || '<p class="text-gray-400 text-center text-xs">Belum ada aturan anggaran.</p>';
-
             const targetListElement = document.getElementById(currentMode === 'bisnis' ? 'rules-display-list' : 'private-rules-display-list');
             if(targetListElement) targetListElement.innerHTML = html;
         }
@@ -806,176 +733,71 @@
         function renderDebts() {
             const isPrivFlag = currentMode === 'pribadi' ? 1 : 0;
             const filteredDebts = cacheDebts.filter(d => (d.is_private || 0) === isPrivFlag);
-            const htmlContent = filteredDebts.map(d => `
-                <div class="bg-gray-50 border border-gray-100 p-2.5 rounded-xl flex justify-between items-center text-xs mb-1">
-                    <div class="space-y-0.5"><p class="font-bold text-gray-800">${d.person_name} <span class="text-[9px] font-bold ${d.type==='UTANG'?'text-amber-600':'text-blue-600'}">[${d.type}]</span></p><p class="text-[10px] text-gray-400 font-mono">Tempo: ${d.due_date||'-'}</p></div>
-                    <div class="text-right flex items-center gap-2">
-                        <div class="flex flex-col text-right"><span class="font-black text-gray-700">Rp ${parseFloat(d.amount || 0).toLocaleString('id-ID')}</span><span class="text-[9px] font-bold ${d.status==='LUNAS'?'text-green-600':'text-red-500'}">${d.status}</span></div>
-                        ${d.status==='BELUM LUNAS' ? `<button onclick="toggleDebtStatus('${d.firestoreId}', 'LUNAS')" class="bg-white text-indigo-600 px-2 py-1 border rounded-lg font-bold text-[10px] shadow-sm">Set Lunas</button>` : ''}
-                        <button onclick="deleteDebt('${d.firestoreId}')" class="text-gray-300 font-bold ml-1">✖</button>
-                    </div>
-                </div>`).join('') || '<p class="text-gray-400 text-center text-xs py-2">Buku bon kosong.</p>';
-
-            const el = document.getElementById(currentMode === 'bisnis' ? 'debt-list-display' : 'debt-list-display-priv');
-            if(el) el.innerHTML = htmlContent;
+            const htmlContent = filteredDebts.map(d => `<div class="bg-gray-50 border border-gray-100 p-2.5 rounded-xl flex justify-between items-center text-xs mb-1"><div class="space-y-0.5"><p class="font-bold text-gray-800">${d.person_name} <span class="text-[9px] font-bold ${d.type==='UTANG'?'text-amber-600':'text-blue-600'}">[${d.type}]</span></p><p class="text-[10px] text-gray-400 font-mono">Tempo: ${d.due_date||'-'}</p></div><div class="text-right flex items-center gap-2"><div class="flex flex-col text-right"><span class="font-black text-gray-700">Rp ${parseFloat(d.amount || 0).toLocaleString('id-ID')}</span><span class="text-[9px] font-bold ${d.status==='LUNAS'?'text-green-600':'text-red-500'}">${d.status}</span></div>${d.status==='BELUM LUNAS' ? `<button onclick="toggleDebtStatus('${d.firestoreId}', 'LUNAS')" class="bg-white text-indigo-600 px-2 py-1 border rounded-lg font-bold text-[10px] shadow-sm">Set Lunas</button>` : ''}<button onclick="deleteDebt('${d.firestoreId}')" class="text-gray-300 font-bold ml-1">✖</button></div></div>`).join('') || '<p class="text-gray-400 text-center text-xs py-2">Buku bon kosong.</p>';
+            const el = document.getElementById(currentMode === 'bisnis' ? 'debt-list-display' : 'debt-list-display-priv'); if(el) el.innerHTML = htmlContent;
         }
 
         async function submitTransaction(isPrivate, btnEl) {
             if (!currentUser) return alert("Sesi Anda belum login / sudah habis. Silakan login ulang.");
             if (btnEl && btnEl.dataset.busy === '1') return;
-
             const prefix = isPrivate === 1 ? 'private-' : '';
-            const amountEl = document.getElementById(`${prefix}tx-amount`);
-            const descEl = document.getElementById(`${prefix}tx-desc`);
-            const typeEl = document.getElementById(`${prefix}tx-type`);
-            const walletEl = document.getElementById(`${prefix}tx-wallet-selector`);
-            const allocationEl = document.getElementById(`${prefix}tx-allocation-selector`);
-
+            const amountEl = document.getElementById(`${prefix}tx-amount`); const descEl = document.getElementById(`${prefix}tx-desc`); const typeEl = document.getElementById(`${prefix}tx-type`); const walletEl = document.getElementById(`${prefix}tx-wallet-selector`); const allocationEl = document.getElementById(`${prefix}tx-allocation-selector`);
             if (!amountEl || !descEl || !typeEl || !walletEl) return alert("Elemen Form tidak ditemukan.");
-
-            const amount = parseFloat(amountEl.value);
-            const desc = descEl.value.trim();
-            const type = typeEl.value;
-            const wallet_id = walletEl.value;
-            
+            const amount = parseFloat(amountEl.value); const desc = descEl.value.trim(); const type = typeEl.value; const wallet_id = walletEl.value;
             if (!amount || amount <= 0) return alert("Mohon masukkan nominal uang yang valid!");
             if (!desc) return alert("Mohon isi keterangan transaksi!");
             if (!wallet_id) return alert("Pilih akun dompet terlebih dahulu.");
-
-            let allocation = 'Umum';
-            if (type === 'OUT' && allocationEl && allocationEl.value) allocation = allocationEl.value;
-
+            let allocation = 'Umum'; if (type === 'OUT' && allocationEl && allocationEl.value) allocation = allocationEl.value;
             const originalLabel = btnEl ? btnEl.innerText : '';
-            if (btnEl) { 
-                btnEl.dataset.busy = '1'; 
-                btnEl.disabled = true; 
-                btnEl.classList.add('opacity-60'); 
-                btnEl.innerText = 'Menyimpan...'; 
-            }
-
+            if (btnEl) { btnEl.dataset.busy = '1'; btnEl.disabled = true; btnEl.classList.add('opacity-60'); btnEl.innerText = 'Menyimpan...'; }
             try {
-                const selectedW = allWallets.find(w => w.firestoreId === wallet_id);
-                if (!selectedW) throw new Error("Dompet tidak ditemukan.");
-
-                const currentBal = parseFloat(selectedW.balance || 0);
-                const newBalance = currentBal + (type === 'IN' ? amount : -amount);
+                const selectedW = allWallets.find(w => w.firestoreId === wallet_id); if (!selectedW) throw new Error("Dompet tidak ditemukan.");
+                const currentBal = parseFloat(selectedW.balance || 0); const newBalance = currentBal + (type === 'IN' ? amount : -amount);
+                if (type === 'OUT' && newBalance < 0 && !confirm("Peringatan: Saldo dompet akan minus. Lanjutkan?")) { if (btnEl) { btnEl.dataset.busy = '0'; btnEl.disabled = false; btnEl.classList.remove('opacity-60'); btnEl.innerText = originalLabel; } return; }
                 
-                if (type === 'OUT' && newBalance < 0 && !confirm("Peringatan: Saldo dompet akan minus. Lanjutkan?")) {
-                    if (btnEl) {
-                        btnEl.dataset.busy = '0';
-                        btnEl.disabled = false;
-                        btnEl.classList.remove('opacity-60');
-                        btnEl.innerText = originalLabel;
-                    }
-                    return;
-                }
-
+                // MENGGUNAKAN FUNGSI PENANGGALAN LOKAL SINKRON KANG JELL
                 const d = new Date();
-                const now = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().replace('T', ' ').substring(0, 19);
+                const nowTgl = getLocalDateString(d);
+                const nowJam = String(d.getHours()).padStart(2, '0') + ":" + String(d.getMinutes()).padStart(2, '0') + ":" + String(d.getSeconds()).padStart(2, '0');
+                const formattedTime = `${nowTgl} ${nowJam}`;
 
                 await db.collection('wallets').doc(wallet_id).update({ balance: newBalance });
-                await db.collection('transactions').add({ 
-                    user_id: currentUser.uid, 
-                    wallet_id, 
-                    amount, 
-                    type, 
-                    description: desc, 
-                    category_allocation: allocation, 
-                    is_private: isPrivate, 
-                    created_at: now 
-                });
-                
-                amountEl.value = ''; 
-                descEl.value = '';
-                if (document.getElementById(`${prefix}allocation-box`)) document.getElementById(`${prefix}allocation-box`).classList.add('hidden');
+                await db.collection('transactions').add({ user_id: currentUser.uid, wallet_id, amount, type, description: desc, category_allocation: allocation, is_private: isPrivate, created_at: formattedTime });
+                amountEl.value = ''; descEl.value = ''; if (document.getElementById(`${prefix}allocation-box`)) document.getElementById(`${prefix}allocation-box`).classList.add('hidden');
                 alert("🎉 Transaksi Berhasil Disimpan!");
-            } catch (error) {
-                console.error("Error Simpan Transaksi:", error);
-                alert("Gagal menyimpan: " + error.message);
-            } finally {
-                if (btnEl) { 
-                    btnEl.dataset.busy = '0'; 
-                    btnEl.disabled = false; 
-                    btnEl.classList.remove('opacity-60'); 
-                    btnEl.innerText = originalLabel; 
-                }
-            }
+            } catch (error) { alert("Gagal menyimpan: " + error.message); } finally { if (btnEl) { btnEl.dataset.busy = '0'; btnEl.disabled = false; btnEl.classList.remove('opacity-60'); btnEl.innerText = originalLabel; } }
         }
 
         async function deleteTransaction(id) {
             if(confirm("Hapus catatan transaksi? Saldo dompet akan disesuaikan kembali secara otomatis.")) {
                 try {
-                    const t = cacheGlobalTransactions.find(tx => tx.firestoreId === id);
-                    if(!t) return;
+                    const t = cacheGlobalTransactions.find(tx => tx.firestoreId === id); if(!t) return;
                     const w = allWallets.find(wallet => wallet.firestoreId === t.wallet_id);
-                    if (w) {
-                        const currentBal = parseFloat(w.balance || 0);
-                        const transAmt = parseFloat(t.amount || 0);
-                        const restoredBalance = currentBal + (t.type === 'IN' ? -transAmt : transAmt);
-                        await db.collection('wallets').doc(t.wallet_id).update({ balance: restoredBalance });
-                    }
+                    if (w) { const currentBal = parseFloat(w.balance || 0); const transAmt = parseFloat(t.amount || 0); const restoredBalance = currentBal + (t.type === 'IN' ? -transAmt : transAmt); await db.collection('wallets').doc(t.wallet_id).update({ balance: restoredBalance }); }
                     await db.collection('transactions').doc(id).delete();
-                } catch(e) {
-                    alert("Gagal menghapus transaksi: " + e.message);
-                }
+                } catch(e) { alert("Gagal menghapus transaksi: " + e.message); }
             }
         }
 
-        async function handleAddNewWallet(isPriv) {
-            let contextMode = isPriv === 1 ? 'Pribadi' : 'Baru';
-            let name = prompt(`Nama Akun/Dompet ${contextMode}:`); if(!name) return;
-            await db.collection('wallets').add({ user_id: currentUser.uid, name, balance: 0, is_private: isPriv });
-        }
-        async function handleAddNewRule(isPriv) {
-            let name = prompt("Nama Pos Anggaran:"); let pct = parseInt(prompt("Persen (1-100):")); if(!name || !pct) return;
-            await db.collection('allocation_rules').add({ user_id: currentUser.uid, category_name: name, percentage: pct, is_private: isPriv });
-        }
-        
-        async function editRule(fid) {
-            let target = activeRules.find(r => r.firestoreId === fid);
-            if(!target) return alert("Aturan tidak ditemukan.");
-            let name = prompt("Ubah Nama Pos Anggaran:", target.category_name); 
-            let pct = prompt("Ubah Persentase (%):", target.percentage); 
-            if(!name || !pct) return;
-            await db.collection('allocation_rules').doc(fid).update({ category_name: name, percentage: parseInt(pct) });
-        }
-        async function deleteRule(fid) { 
-            if(confirm("Hapus anggaran ini?")) {
-                await db.collection('allocation_rules').doc(fid).delete(); 
-            }
-        }
-
-        async function addNewInventoryItem() {
-            let name = prompt("Nama Barang Sembako:"); let buy = parseFloat(prompt("Harga Beli Modal (Rp):")); let sell = parseFloat(prompt("Harga Jual Toko (Rp):")); let stock = parseInt(prompt("Jumlah Stok Masuk:"));
-            if(!name || isNaN(buy) || isNaN(sell) || isNaN(stock)) return alert("Data tidak valid. Mohon periksa kembali!");
-            await db.collection('inventory').add({ user_id: currentUser.uid, item_name: name, initial_stock: stock, current_stock: stock, buy_price: buy, sell_price: sell });
-        }
+        async function handleAddNewWallet(isPriv) { let contextMode = isPriv === 1 ? 'Pribadi' : 'Baru'; let name = prompt(`Nama Akun/Dompet ${contextMode}:`); if(!name) return; await db.collection('wallets').add({ user_id: currentUser.uid, name, balance: 0, is_private: isPriv }); }
+        async function handleAddNewRule(isPriv) { let name = prompt("Nama Pos Anggaran:"); let pct = parseInt(prompt("Persen (1-100):")); if(!name || !pct) return; await db.collection('allocation_rules').add({ user_id: currentUser.uid, category_name: name, percentage: pct, is_private: isPriv }); }
+        async function editRule(fid) { let target = activeRules.find(r => r.firestoreId === fid); if(!target) return alert("Aturan tidak ditemukan."); let name = prompt("Ubah Nama Pos Anggaran:", target.category_name); let pct = prompt("Ubah Persentase (%):", target.percentage); if(!name || !pct) return; await db.collection('allocation_rules').doc(fid).update({ category_name: name, percentage: parseInt(pct) }); }
+        async function deleteRule(fid) { if(confirm("Hapus anggaran ini?")) { await db.collection('allocation_rules').doc(fid).delete(); } }
+        async function addNewInventoryItem() { let name = prompt("Nama Barang Sembako:"); let buy = parseFloat(prompt("Harga Beli Modal (Rp):")); let sell = parseFloat(prompt("Harga Jual Toko (Rp):")); let stock = parseInt(prompt("Jumlah Stok Masuk:")); if(!name || isNaN(buy) || isNaN(sell) || isNaN(stock)) return alert("Data tidak valid. Mohon periksa kembali!"); await db.collection('inventory').add({ user_id: currentUser.uid, item_name: name, initial_stock: stock, current_stock: stock, buy_price: buy, sell_price: sell }); }
         async function deleteInventoryItem(id) { if(confirm("Hapus produk ini secara permanen dari gudang?")) await db.collection('inventory').doc(id).delete(); }
-        async function addNewDebt(isPriv) {
-            let name = prompt("Nama:"); let amount = prompt("Nominal (Rp):"); if(!name || !amount) return;
-            let typeOpt = prompt("Ketik '1' untuk PIUTANG\nKetik '2' untuk UTANG:", "1");
-            let due = prompt("Jatuh Tempo (YYYY-MM-DD):");
-            await db.collection('debts').add({ user_id: currentUser.uid, person_name: name, amount: parseFloat(amount), type: typeOpt === '2' ? 'UTANG' : 'PIUTANG', due_date: due, status: 'BELUM LUNAS', is_private: isPriv || 0 });
-        }
+        async function addNewDebt(isPriv) { let name = prompt("Nama:"); let amount = prompt("Nominal (Rp):"); if(!name || !amount) return; let typeOpt = prompt("Ketik '1' untuk PIUTANG\nKetik '2' untuk UTANG:", "1"); let due = prompt("Jatuh Tempo (YYYY-MM-DD):"); await db.collection('debts').add({ user_id: currentUser.uid, person_name: name, amount: parseFloat(amount), type: typeOpt === '2' ? 'UTANG' : 'PIUTANG', due_date: due, status: 'BELUM LUNAS', is_private: isPriv || 0 }); }
         async function toggleDebtStatus(fid, status) { await db.collection('debts').doc(fid).update({ status: status }); }
         async function deleteDebt(fid) { if(confirm("Hapus bon ini?")) await db.collection('debts').doc(fid).delete(); }
-        async function addNewGoal(isPriv) {
-            let name = prompt("Nama Target:"); let target = prompt("Nominal Target:"); if(!name || !target) return;
-            await db.collection('saving_goals').add({ user_id: currentUser.uid, goal_name: name, target_amount: parseFloat(target), current_amount: 0, is_private: isPriv || 0 });
-        }
-        async function updateGoalAmount(fid, current) {
-            let val = prompt("Total Tabungan Terkumpul Sekarang (Rp):", current); if(!val) return;
-            await db.collection('saving_goals').doc(fid).update({ current_amount: parseFloat(val) });
-        }
+        async function addNewGoal(isPriv) { let name = prompt("Nama Target:"); let target = prompt("Nominal Target:"); if(!name || !target) return; await db.collection('saving_goals').add({ user_id: currentUser.uid, goal_name: name, target_amount: parseFloat(target), current_amount: 0, is_private: isPriv || 0 }); }
+        async function updateGoalAmount(fid, current) { let val = prompt("Total Tabungan Terkumpul Sekarang (Rp):", current); if(!val) return; await db.collection('saving_goals').doc(fid).update({ current_amount: parseFloat(val) }); }
         async function deleteGoal(id) { if(confirm("Hapus target?")) await db.collection('saving_goals').doc(id).delete(); }
 
         async function exportToExcel(isPrivate) {
             if (!currentUser) return alert("Silakan login.");
             try {
                 const targetList = cacheGlobalTransactions.filter(t => t.is_private === isPrivate); if (targetList.length === 0) return alert("Belum ada transaksi.");
-                const watermarkHeader = ["# LISENSI APLIKASI PERMANEN: KANG JELL (WA 083814559667 / IG @kang.jell) #"];
-                const headers = ["No", "Tanggal", "Waktu", "Jenis", "Nominal (Rp)", "Keterangan", "Pos Alokasi"];
-                const rows = targetList.map((t, i) => { const parts = (t.created_at || '').split(' '); const dateParts = (parts[0] || '').split('-'); const tgl = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : (parts[0] || '-'); return [i + 1, `"${tgl}"`, `"${parts[1] ? parts[1].slice(0, 5) : '-'}"`, t.type === 'IN' ? 'MASUK' : 'KELUAR', t.amount, `"${(t.description || '-').replace(/"/g, '""')}"`, `"${(t.category_allocation || 'Umum').replace(/"/g, '""')}"`].join(','); });
+                const watermarkHeader = ["# LISENSI APLIKASI PERMANEN: KANG JELL (WA 083814559667 / IG @kang.jell) #"]; const headers = ["No", "Tanggal", "Waktu", "Jenis", "Nominal (Rp)", "Keterangan", "Pos Alokasi"];
+                const rows = targetList.map((t, i) => { const parts = (t.created_at || '').trim().split(' '); const dateParts = (parts[0] || '').split('-'); const tgl = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : (parts[0] || '-'); return [i + 1, `"${tgl}"`, `"${parts[1] ? parts[1].slice(0, 5) : '-'}"`, t.type === 'IN' ? 'MASUK' : 'KELUAR', t.amount, `"${(t.description || '-').replace(/"/g, '""')}"`, `"${(t.category_allocation || 'Umum').replace(/"/g, '""')}"`].join(','); });
                 const csvContent = [watermarkHeader.join(','), '', headers.join(','), ...rows].join('\n'); const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `Pembukuan_${isPrivate===1?'Pribadi':'Toko'}_${new Date().toISOString().split('T')[0]}.csv`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
             } catch(e) { alert("Gagal unduh CSV: " + e.message); }
         }
@@ -984,19 +806,13 @@
         function applyReportCustomFilter() { reportFilterStart = document.getElementById('rep-start-date').value; reportFilterEnd = document.getElementById('rep-end-date').value; renderReportModule(); }
         
         function setReportTimeFilter(type) {
-            const today = new Date(); const formatDate = (d) => d.toISOString().split('T')[0];
-            let start = '', end = '';
-            if (type === 'hari_ini') { start = formatDate(today); end = formatDate(today); }
-            else if (type === 'kemarin') { const yest = new Date(); yest.setDate(today.getDate() - 1); start = formatDate(yest); end = formatDate(yest); }
-            else if (type === '7hari') { const p7 = new Date(); p7.setDate(today.getDate() - 7); start = formatDate(p7); end = formatDate(today); }
-            else if (type === '30hari') { const p30 = new Date(); p30.setDate(today.getDate() - 30); start = formatDate(p30); end = formatDate(today); }
-            
+            const today = new Date(); let start = '', end = '';
+            if (type === 'hari_ini') { start = getLocalDateString(today); end = getLocalDateString(today); }
+            else if (type === 'kemarin') { const yest = new Date(); yest.setDate(today.getDate() - 1); start = getLocalDateString(yest); end = getLocalDateString(yest); }
+            else if (type === '7hari') { const p7 = new Date(); p7.setDate(today.getDate() - 7); start = getLocalDateString(p7); end = getLocalDateString(today); }
+            else if (type === '30hari') { const p30 = new Date(); p30.setDate(today.getDate() - 30); start = getLocalDateString(p30); end = getLocalDateString(today); }
             if(type !== 'custom') { reportFilterStart = start; reportFilterEnd = end; document.getElementById('report-custom-date-box').classList.add('hidden'); }
-            
-            ['all', 'hari_ini', 'kemarin', '7hari', '30hari'].forEach(b => {
-                const el = document.getElementById(`btn-rep-f-${b}`);
-                if(el) el.className = (b === type) ? "bg-indigo-600 text-white px-2.5 py-1 rounded-lg font-bold" : "bg-gray-200 text-gray-600 px-2.5 py-1 rounded-lg font-semibold";
-            });
+            ['all', 'hari_ini', 'kemarin', '7hari', '30hari'].forEach(b => { const el = document.getElementById(`btn-rep-f-${b}`); if(el) el.className = (b === type) ? "bg-indigo-600 text-white px-2.5 py-1 rounded-lg font-bold" : "bg-gray-200 text-gray-600 px-2.5 py-1 rounded-lg font-semibold"; });
             renderReportModule();
         }
         function switchSubReport(type) { activeSubReport = type; document.querySelectorAll("[id^='sub-rep-']").forEach(btn => btn.className = btn.id === `sub-rep-${type}` ? "bg-white text-indigo-600 p-1.5 rounded-lg shadow-sm font-bold" : "text-gray-600 p-1.5 rounded-lg font-bold"); renderReportModule(); }
@@ -1004,122 +820,42 @@
         function renderReportModule() {
             const container = document.getElementById('report-content-area'); if (!container) return;
             const bizTxs = cacheGlobalTransactions.filter(t => t.is_private === 0);
-            const filtered = bizTxs.filter(t => !reportFilterStart || (t.created_at.split(' ')[0] >= reportFilterStart && t.created_at.split(' ')[0] <= reportFilterEnd));
+            const filtered = bizTxs.filter(t => !reportFilterStart || (t.created_at.trim().split(' ')[0] >= reportFilterStart && t.created_at.trim().split(' ')[0] <= reportFilterEnd));
 
             if (activeSubReport === 'sales') {
-                const salesList = filtered.filter(t => t.type === 'IN' && t.description.includes('Penjualan'));
-                let totalFinansialSales = salesList.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
-
+                const salesList = filtered.filter(t => t.type === 'IN' && t.description.includes('Penjualan')); let totalFinansialSales = salesList.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
                 let itemQtyMap = {}; cacheInventory.forEach(i => { itemQtyMap[i.item_name] = 0; });
-                salesList.forEach(t => {
-                    const match = t.description.match(/Penjualan\s*-\s*(.+?)\s*\((\d+)\s*Pcs\)/i);
-                    if(match) {
-                        const namePart = match[1].trim(); const qty = parseInt(match[2]) || 0;
-                        const matchKey = Object.keys(itemQtyMap).find(k => k.toLowerCase() === namePart.toLowerCase()) || namePart;
-                        itemQtyMap[matchKey] = (itemQtyMap[matchKey] || 0) + qty;
-                    }
-                });
-
-                let sortedItems = Object.keys(itemQtyMap).map(k => ({ name: k, qty: itemQtyMap[k] })).sort((a,b) => b.qty - a.qty);
-                let terlaris = sortedItems.filter(i => i.qty > 0).slice(0, 3);
-                let slowMoving = sortedItems.filter(i => i.qty === 0).slice(0, 3);
-
-                container.innerHTML = `
-                    <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 text-blue-900 flex justify-between items-center text-xs">
-                        <div><p class="font-bold text-[10px] uppercase opacity-70">Total Nilai Penjualan Barang</p><p class="text-lg font-black mt-0.5">Rp ${totalFinansialSales.toLocaleString('id-ID')}</p></div><span class="text-2xl">📈</span>
-                    </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs mt-2">
-                        <div class="bg-green-50 border border-green-100 p-2.5 rounded-xl text-green-900"><p class="font-bold text-[10px] uppercase text-green-700">💡 3 Produk Terlaris (Periode Ini)</p><ul class="list-disc list-inside mt-1 space-y-0.5 font-medium text-[11px]">${terlaris.map(i => `<li>${i.name} (${i.qty} Pcs)</li>`).join('') || 'Belum ada produk terjual.'}</ul></div>
-                        <div class="bg-amber-50 border border-amber-100 p-2.5 rounded-xl text-amber-900"><p class="font-bold text-[10px] uppercase text-amber-700">🐢 Produk Belum Terjual</p><ul class="list-disc list-inside mt-1 space-y-0.5 font-medium text-[11px]">${slowMoving.map(i => `<li>${i.name}</li>`).join('') || 'Semua produk pernah terjual.'}</ul></div>
-                    </div>`;
+                salesList.forEach(t => { const match = t.description.match(/Penjualan\s*-\s*(.+?)\s*\((\d+)\s*Pcs\)/i); if(match) { const namePart = match[1].trim(); const qty = parseInt(match[2]) || 0; const matchKey = Object.keys(itemQtyMap).find(k => k.toLowerCase() === namePart.toLowerCase()) || namePart; itemQtyMap[matchKey] = (itemQtyMap[matchKey] || 0) + qty; } });
+                let sortedItems = Object.keys(itemQtyMap).map(k => ({ name: k, qty: itemQtyMap[k] })).sort((a,b) => b.qty - a.qty); let terlaris = sortedItems.filter(i => i.qty > 0).slice(0, 3); let slowMoving = sortedItems.filter(i => i.qty === 0).slice(0, 3);
+                container.innerHTML = `<div class="bg-blue-50 p-3 rounded-xl border border-blue-100 text-blue-900 flex justify-between items-center text-xs"><div><p class="font-bold text-[10px] uppercase opacity-70">Total Nilai Penjualan Barang</p><p class="text-lg font-black mt-0.5">Rp ${totalFinansialSales.toLocaleString('id-ID')}</p></div><span class="text-2xl">📈</span></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs mt-2"><div class="bg-green-50 border border-green-100 p-2.5 rounded-xl text-green-900"><p class="font-bold text-[10px] uppercase text-green-700">💡 3 Produk Terlaris (Periode Ini)</p><ul class="list-disc list-inside mt-1 space-y-0.5 font-medium text-[11px]">${terlaris.map(i => `<li>${i.name} (${i.qty} Pcs)</li>`).join('') || 'Belum ada produk terjual.'}</ul></div><div class="bg-amber-50 border border-amber-100 p-2.5 rounded-xl text-amber-900"><p class="font-bold text-[10px] uppercase text-amber-700">🐢 Produk Belum Terjual</p><ul class="list-disc list-inside mt-1 space-y-0.5 font-medium text-[11px]">${slowMoving.map(i => `<li>${i.name}</li>`).join('') || 'Semua produk pernah terjual.'}</ul></div></div>`;
             } 
             else if (activeSubReport === 'profit') {
-                let omsetPenjualan = filtered.filter(t => t.type === 'IN' && t.description.includes('Penjualan')).reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
-                let hppSumCalculated = 0;
-                
-                filtered.forEach(t => {
-                    const match = t.description.match(/Penjualan\s*-\s*(.+?)\s*\((\d+)\s*Pcs\)/i);
-                    if(match) {
-                        const namePart = match[1].trim().toLowerCase(); 
-                        const qty = parseInt(match[2]) || 0;
-                        let matchInv = cacheInventory.find(i => i.item_name.trim().toLowerCase() === namePart);
-                        if(matchInv) {
-                            hppSumCalculated += (qty * parseFloat(matchInv.buy_price || 0));
-                        }
-                    }
-                });
-                
+                let omsetPenjualan = filtered.filter(t => t.type === 'IN' && t.description.includes('Penjualan')).reduce((sum, t) => sum + parseFloat(t.amount || 0), 0); let hppSumCalculated = 0;
+                filtered.forEach(t => { const match = t.description.match(/Penjualan\s*-\s*(.+?)\s*\((\d+)\s*Pcs\)/i); if(match) { const namePart = match[1].trim().toLowerCase(); const qty = parseInt(match[2]) || 0; let matchInv = cacheInventory.find(i => i.item_name.trim().toLowerCase() === namePart); if(matchInv) { hppSumCalculated += (qty * parseFloat(matchInv.buy_price || 0)); } } });
                 let labaBersihToko = omsetPenjualan - hppSumCalculated;
-                container.innerHTML = `
-                    <div class="bg-gray-50 border p-3 rounded-xl space-y-2 text-xs font-semibold border-gray-200 shadow-sm">
-                        <div class="flex justify-between"><span>Omset Penjualan Barang:</span><span class="text-blue-600 font-bold">Rp ${omsetPenjualan.toLocaleString('id-ID')}</span></div>
-                        <div class="flex justify-between border-b pb-1"><span>Beban Pokok Modal (HPP Sembako):</span><span class="text-amber-600 font-bold">-Rp ${hppSumCalculated.toLocaleString('id-ID')}</span></div>
-                        <div class="flex justify-between pt-2 font-black text-sm bg-indigo-50 p-2 rounded text-indigo-950"><span>LABA RELEVAN BERSIH:</span><span class="${labaBersihToko >= 0 ? 'text-emerald-600' : 'text-red-600'}">Rp ${labaBersihToko.toLocaleString('id-ID')}</span></div>
-                    </div>`;
+                container.innerHTML = `<div class="bg-gray-50 border p-3 rounded-xl space-y-2 text-xs font-semibold border-gray-200 shadow-sm"><div class="flex justify-between"><span>Omset Penjualan Barang:</span><span class="text-blue-600 font-bold">Rp ${omsetPenjualan.toLocaleString('id-ID')}</span></div><div class="flex justify-between border-b pb-1"><span>Beban Pokok Modal (HPP Sembako):</span><span class="text-amber-600 font-bold">-Rp ${hppSumCalculated.toLocaleString('id-ID')}</span></div><div class="flex justify-between pt-2 font-black text-sm bg-indigo-50 p-2 rounded text-indigo-950"><span>LABA RELEVAN BERSIH:</span><span class="${labaBersihToko >= 0 ? 'text-emerald-600' : 'text-red-600'}">Rp ${labaBersihToko.toLocaleString('id-ID')}</span></div></div>`;
             }
             else if (activeSubReport === 'buy') {
-                const buyTxs = filtered.filter(t => t.type === 'OUT' && /Kulakan|Pasokan|Rusak/i.test(t.description));
-                const totalBuy = buyTxs.reduce((a, b) => a + parseFloat(b.amount || 0), 0);
-                container.innerHTML = `
-                    <div class="bg-amber-50 p-3 rounded-xl border border-amber-100 text-amber-900 flex justify-between items-center text-xs">
-                        <div><p class="font-bold text-[10px] uppercase opacity-70">Total Pengeluaran Belanja Modal</p><p class="text-lg font-black mt-0.5">Rp ${totalBuy.toLocaleString('id-ID')}</p></div><span class="text-2xl">🧾</span>
-                    </div>
-                    <div class="space-y-1 mt-2 max-h-48 overflow-y-auto">
-                        ${buyTxs.map(t => `<div class="bg-gray-50 p-2 rounded-lg text-[11px] flex justify-between border border-gray-100"><span>${t.description}</span><span class="font-bold text-amber-700">Rp ${parseFloat(t.amount || 0).toLocaleString('id-ID')}</span></div>`).join('') || '<p class="text-gray-400 text-center text-xs py-4">Tidak ada catatan kulakan barang.</p>'}
-                    </div>`;
+                const buyTxs = filtered.filter(t => t.type === 'OUT' && /Kulakan|Pasokan|Rusak/i.test(t.description)); const totalBuy = buyTxs.reduce((a, b) => a + parseFloat(b.amount || 0), 0);
+                container.innerHTML = `<div class="bg-amber-50 p-3 rounded-xl border border-amber-100 text-amber-900 flex justify-between items-center text-xs"><div><p class="font-bold text-[10px] uppercase opacity-70">Total Pengeluaran Belanja Modal</p><p class="text-lg font-black mt-0.5">Rp ${totalBuy.toLocaleString('id-ID')}</p></div><span class="text-2xl">🧾</span></div><div class="space-y-1 mt-2 max-h-48 overflow-y-auto">${buyTxs.map(t => `<div class="bg-gray-50 p-2 rounded-lg text-[11px] flex justify-between border border-gray-100"><span>${t.description}</span><span class="font-bold text-amber-700">Rp ${parseFloat(t.amount || 0).toLocaleString('id-ID')}</span></div>`).join('') || '<p class="text-gray-400 text-center text-xs py-4">Tidak ada catatan kulakan barang.</p>'}</div>`;
             }
             else if (activeSubReport === 'stock') {
-                const totalStockValue = cacheInventory.reduce((a, i) => a + (i.current_stock * parseFloat(i.buy_price || 0)), 0);
-                const totalStockQty = cacheInventory.reduce((a, i) => a + i.current_stock, 0);
-                container.innerHTML = `
-                    <div class="bg-indigo-50 p-3 rounded-xl border border-indigo-100 text-indigo-900 flex justify-between items-center text-xs">
-                        <div><p class="font-bold text-[10px] uppercase opacity-70">Total Nilai Aset Stok Toko (Modal Terikat)</p><p class="text-lg font-black mt-0.5">Rp ${totalStockValue.toLocaleString('id-ID')}</p><p class="text-[10px] font-semibold mt-0.5">${totalStockQty} Pcs tersisa di gudang</p></div><span class="text-2xl">📦</span>
-                    </div>
-                    <div class="space-y-1 mt-2 max-h-48 overflow-y-auto">
-                        ${cacheInventory.map(i => `<div class="bg-gray-50 p-2 rounded-lg text-[11px] flex justify-between border border-gray-100"><span>${i.item_name} (${i.current_stock} Pcs)</span><span class="font-bold text-indigo-700">Rp ${(i.current_stock * parseFloat(i.buy_price || 0)).toLocaleString('id-ID')}</span></div>`).join('') || '<p class="text-gray-400 text-center text-xs py-4">Belum ada barang di inventory.</p>'}
-                    </div>`;
+                const totalStockValue = cacheInventory.reduce((a, i) => a + (i.current_stock * parseFloat(i.buy_price || 0)), 0); const totalStockQty = cacheInventory.reduce((a, i) => a + i.current_stock, 0);
+                container.innerHTML = `<div class="bg-indigo-50 p-3 rounded-xl border border-indigo-100 text-indigo-900 flex justify-between items-center text-xs"><div><p class="font-bold text-[10px] uppercase opacity-70">Total Nilai Aset Stok Toko (Modal Terikat)</p><p class="text-lg font-black mt-0.5">Rp ${totalStockValue.toLocaleString('id-ID')}</p><p class="text-[10px] font-semibold mt-0.5">${totalStockQty} Pcs tersisa di gudang</p></div><span class="text-2xl">📦</span></div><div class="space-y-1 mt-2 max-h-48 overflow-y-auto">${cacheInventory.map(i => `<div class="bg-gray-50 p-2 rounded-lg text-[11px] flex justify-between border border-gray-100"><span>${i.item_name} (${i.current_stock} Pcs)</span><span class="font-bold text-indigo-700">Rp ${(i.current_stock * parseFloat(i.buy_price || 0)).toLocaleString('id-ID')}</span></div>`).join('') || '<p class="text-gray-400 text-center text-xs py-4">Belum ada barang di inventory.</p>'}</div>`;
             }
             else if (activeSubReport === 'debts') {
-                const bizDebts = cacheDebts.filter(d => (d.is_private || 0) === 0);
-                const totalPiutang = bizDebts.filter(d => d.type === 'PIUTANG' && d.status === 'BELUM LUNAS').reduce((a, b) => a + parseFloat(b.amount || 0), 0);
-                const totalUtang = bizDebts.filter(d => d.type === 'UTANG' && d.status === 'BELUM LUNAS').reduce((a, b) => a + parseFloat(b.amount || 0), 0);
-                container.innerHTML = `
-                    <div class="grid grid-cols-2 gap-2 text-xs">
-                        <div class="bg-blue-50 border border-blue-100 p-2.5 rounded-xl text-blue-900"><p class="font-bold text-[10px] uppercase">Piutang (Bon Pelanggan)</p><p class="text-base font-black mt-0.5">Rp ${totalPiutang.toLocaleString('id-ID')}</p></div>
-                        <div class="bg-red-50 border border-red-100 p-2.5 rounded-xl text-red-900"><p class="font-bold text-[10px] uppercase">Utang (Ke Sales/Agen)</p><p class="text-base font-black mt-0.5">Rp ${totalUtang.toLocaleString('id-ID')}</p></div>
-                    </div>
-                    <div class="space-y-1 mt-2 max-h-48 overflow-y-auto">
-                        ${bizDebts.filter(d => d.status === 'BELUM LUNAS').map(d => `<div class="bg-gray-50 p-2 rounded-lg text-[11px] flex justify-between border border-gray-100"><span>${d.person_name} [${d.type}]</span><span class="font-bold">Rp ${parseFloat(d.amount || 0).toLocaleString('id-ID')}</span></div>`).join('') || '<p class="text-gray-400 text-center text-xs py-4">Semua hutang piutang lunas.</p>'}
-                    </div>`;
+                const bizDebts = cacheDebts.filter(d => (d.is_private || 0) === 0); const totalPiutang = bizDebts.filter(d => d.type === 'PIUTANG' && d.status === 'BELUM LUNAS').reduce((a, b) => a + parseFloat(b.amount || 0), 0); const totalUtang = bizDebts.filter(d => d.type === 'UTANG' && d.status === 'BELUM LUNAS').reduce((a, b) => a + parseFloat(b.amount || 0), 0);
+                container.innerHTML = `<div class="grid grid-cols-2 gap-2 text-xs"><div class="bg-blue-50 border border-blue-100 p-2.5 rounded-xl text-blue-900"><p class="font-bold text-[10px] uppercase">Piutang (Bon Pelanggan)</p><p class="text-base font-black mt-0.5">Rp ${totalPiutang.toLocaleString('id-ID')}</p></div><div class="bg-red-50 border border-red-100 p-2.5 rounded-xl text-red-900"><p class="font-bold text-[10px] uppercase">Utang (Ke Sales/Agen)</p><p class="text-base font-black mt-0.5">Rp ${totalUtang.toLocaleString('id-ID')}</p></div></div><div class="space-y-1 mt-2 max-h-48 overflow-y-auto">${bizDebts.filter(d => d.status === 'BELUM LUNAS').map(d => `<div class="bg-gray-50 p-2 rounded-lg text-[11px] flex justify-between border border-gray-100"><span>${d.person_name} [${d.type}]</span><span class="font-bold">Rp ${parseFloat(d.amount || 0).toLocaleString('id-ID')}</span></div>`).join('') || '<p class="text-gray-400 text-center text-xs py-4">Semua hutang piutang lunas.</p>'}</div>`;
             }
             else if (activeSubReport === 'opname') {
-                container.innerHTML = `
-                    <div class="overflow-x-auto max-h-56 overflow-y-auto">
-                        <table class="w-full text-[11px] text-left">
-                            <thead><tr class="text-gray-400 uppercase text-[9px] border-b"><th class="py-1">Barang</th><th class="py-1 text-right">Awal</th><th class="py-1 text-right">Sisa</th><th class="py-1 text-right">Terjual</th></tr></thead>
-                            <tbody>
-                                ${cacheInventory.map(i => `<tr class="border-t border-gray-100"><td class="py-1.5 font-semibold">${i.item_name}</td><td class="py-1.5 text-right">${i.initial_stock}</td><td class="py-1.5 text-right ${i.current_stock <= 5 ? 'text-red-600 font-bold' : ''}">${i.current_stock}</td><td class="py-1.5 text-right text-gray-500">${i.initial_stock - i.current_stock}</td></tr>`).join('') || `<tr><td colspan="4" class="text-gray-400 text-center py-4">Belum ada barang untuk di-opname.</td></tr>`}
-                            </tbody>
-                        </table>
-                    </div>`;
+                container.innerHTML = `<div class="overflow-x-auto max-h-56 overflow-y-auto"><table class="w-full text-[11px] text-left"><thead><tr class="text-gray-400 uppercase text-[9px] border-b"><th class="py-1">Barang</th><th class="py-1 text-right">Awal</th><th class="py-1 text-right">Sisa</th><th class="py-1 text-right">Terjual</th></tr></thead><tbody>${cacheInventory.map(i => `<tr class="border-t border-gray-100"><td class="py-1.5 font-semibold">${i.item_name}</td><td class="py-1.5 text-right">${i.initial_stock}</td><td class="py-1.5 text-right ${i.current_stock <= 5 ? 'text-red-600 font-bold' : ''}">${i.current_stock}</td><td class="py-1.5 text-right text-gray-500">${i.initial_stock - i.current_stock}</td></tr>`).join('') || `<tr><td colspan="4" class="text-gray-400 text-center py-4">Belum ada barang untuk di-opname.</td></tr>`}</tbody></table></div>`;
             }
-            else { container.innerHTML = `<p class="text-gray-400 text-center text-xs py-4">Data terekap otomatis berskala cloud.</p>`; }
         }
 
         function updateCharts(pIn, pOut, prIn, prOut) {
             try {
-                const canvasShop = document.getElementById('cashflowChart'); 
-                if (canvasShop && currentMode === 'bisnis' && !canvasShop.closest('.hidden')) { 
-                    const ctx = canvasShop.getContext('2d'); 
-                    if (myChart) myChart.destroy(); 
-                    myChart = new Chart(ctx, { type: 'doughnut', data: { labels: ['Masuk', 'Keluar'], datasets: [{ data: [pIn || 1, pOut || 0], backgroundColor: ['#10B981', '#EF4444'] }] }, options: { responsive: true, plugins: { legend: { display: false } } } }); 
-                }
-                const canvasPriv = document.getElementById('privateCashflowChart'); 
-                if (canvasPriv && currentMode === 'pribadi' && !canvasPriv.closest('.hidden')) { 
-                    const ctxPriv = canvasPriv.getContext('2d'); 
-                    if (myPrivateChart) myPrivateChart.destroy(); 
-                    myPrivateChart = new Chart(ctxPriv, { type: 'doughnut', data: { labels: ['Masuk', 'Keluar'], datasets: [{ data: [prIn || 1, prOut || 0], backgroundColor: ['#059669', '#DC2626'] }] }, options: { responsive: true, plugins: { legend: { display: false } } } }); 
-                }
+                const canvasShop = document.getElementById('cashflowChart'); if (canvasShop && currentMode === 'bisnis' && !canvasShop.closest('.hidden')) { const ctx = canvasShop.getContext('2d'); if (myChart) myChart.destroy(); myChart = new Chart(ctx, { type: 'doughnut', data: { labels: ['Masuk', 'Keluar'], datasets: [{ data: [pIn || 1, pOut || 0], backgroundColor: ['#10B981', '#EF4444'] }] }, options: { responsive: true, plugins: { legend: { display: false } } } }); }
+                const canvasPriv = document.getElementById('privateCashflowChart'); if (canvasPriv && currentMode === 'pribadi' && !canvasPriv.closest('.hidden')) { const ctxPriv = canvasPriv.getContext('2d'); if (myPrivateChart) myPrivateChart.destroy(); myPrivateChart = new Chart(ctxPriv, { type: 'doughnut', data: { labels: ['Masuk', 'Keluar'], datasets: [{ data: [prIn || 1, prOut || 0], backgroundColor: ['#059669', '#DC2626'] }] }, options: { responsive: true, plugins: { legend: { display: false } } } }); }
             } catch(e) { console.error("Gagal memperbarui grafik:", e); }
         }
 
@@ -1130,19 +866,19 @@
             renderTransactions();
         }
 
-        // PERBAIKAN: SET FILTER LOG RIWAYAT DENGAN OPSI SANGAT LENGKAP
+        // PERBAIKAN MATANG: LOGIKA STRUKTUR PENANGGALAN FILTER DENGAN ZONA WAKTU LOKAL
         function setFilterTime(type, isPriv) {
-            const today = new Date(); const formatDate = (d) => d.toISOString().split('T')[0];
+            const today = new Date();
             let start = '', end = '';
             
             if (type === 'hari_ini') { 
-                start = formatDate(today); end = formatDate(today); 
+                start = getLocalDateString(today); end = getLocalDateString(today); 
             } else if (type === 'kemarin') {
-                const y = new Date(); y.setDate(today.getDate() - 1); start = formatDate(y); end = formatDate(y);
+                const y = new Date(); y.setDate(today.getDate() - 1); start = getLocalDateString(y); end = getLocalDateString(y);
             } else if (type === '7hari') { 
-                const p7 = new Date(); p7.setDate(today.getDate() - 7); start = formatDate(p7); end = formatDate(today); 
+                const p7 = new Date(); p7.setDate(today.getDate() - 7); start = getLocalDateString(p7); end = getLocalDateString(today); 
             } else if (type === '30hari') {
-                const p30 = new Date(); p30.setDate(today.getDate() - 30); start = formatDate(p30); end = formatDate(today);
+                const p30 = new Date(); p30.setDate(today.getDate() - 30); start = getLocalDateString(p30); end = getLocalDateString(today);
             } else if (type === 'all') {
                 start = ''; end = '';
             }
@@ -1156,61 +892,32 @@
             }
             
             const prefix = isPriv === 0 ? 'shop' : 'priv';
+            const activeClass = isPriv === 0 ? "bg-indigo-600 text-white px-2.5 py-1 rounded-lg font-bold shrink-0" : "bg-emerald-600 text-white px-2.5 py-1 rounded-lg font-bold shrink-0";
+            
             ['hari_ini', 'kemarin', '7hari', '30hari', 'all'].forEach(b => {
                 const btn = document.getElementById(`btn-f-${prefix}-${b}`);
                 if(btn) {
                     if(b === type) {
-                        btn.className = isPriv === 0 ? "bg-indigo-600 text-white px-2.5 py-1 rounded-lg font-bold shrink-0" : "bg-emerald-600 text-white px-2.5 py-1 rounded-lg font-bold shrink-0";
+                        btn.className = activeClass;
                     } else {
                         btn.className = "bg-gray-200 text-gray-600 px-2.5 py-1 rounded-lg font-semibold shrink-0";
                     }
                 }
             });
+            
+            const customBtn = document.getElementById(`btn-f-${prefix}-custom`);
+            if(customBtn) customBtn.className = "bg-gray-200 text-gray-600 px-2.5 py-1 rounded-lg font-semibold shrink-0";
+
             renderTransactions();
         }
 
         // --- SERVICE WORKER PWA ---
         if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        // Menggunakan nama file dinamis agar fleksibel di server manapun
-        const currentFileName = window.location.pathname.split('/').pop() || 'index.html';
-        
-        const b = new Blob([`
-            const CACHE_NAME = 'finance-v2'; // Versi cache dinaikkan agar cache lama dibuang
-            
-            self.addEventListener('install', e => {
-                self.skipWaiting();
+            window.addEventListener('load', () => {
+                const b = new Blob([`const CACHE_NAME = 'finance-v1'; self.addEventListener('install', e => self.skipWaiting()); self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));`], { type: 'application/javascript' });
+                const u = URL.createObjectURL(b); navigator.serviceWorker.register(u).catch(e => console.log('Gagal:', e));
             });
-            
-            self.addEventListener('activate', e => {
-                // Bersihkan semua cache lama yang merusak sistem routing PWA
-                e.waitUntil(
-                    caches.keys().then(keys => {
-                        return Promise.all(
-                            keys.map(key => {
-                                if (key !== CACHE_NAME) {
-                                    return caches.delete(key);
-                                }
-                            })
-                        );
-                    }).then(() => self.clients.claim())
-                );
-            });
-            
-            self.addEventListener('fetch', e => {
-                // Memastikan request online selalu diutamakan daripada cache offline lama
-                e.respondWith(
-                    fetch(e.request).catch(() => caches.match(e.request))
-                );
-            });
-        `], { type: 'application/javascript' });
-        
-        const u = URL.createObjectURL(b);
-        navigator.serviceWorker.register(u)
-            .then(() => console.log('Service Worker PWA Terkalibrasi Aman!'))
-            .catch(e => console.error('Gagal:', e));
-    });
-}
+        }
     </script>
 </body>
 </html>
